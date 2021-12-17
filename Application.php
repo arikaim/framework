@@ -15,6 +15,7 @@ use Psr\Http\Message\ResponseInterface;
 use Nyholm\Psr7Server\ServerRequestCreator;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
 use FastRoute\Dispatcher;
+use Nyholm\Psr7\Factory\Psr17Factory;
 
 use Arikaim\Core\Framework\Router;
 use Arikaim\Core\Framework\MiddlewareInterface;
@@ -91,13 +92,14 @@ class Application
      * Constructor
      *
      * @param ContainerInterface $container
-     * @param object $factory
      * @param string $basePath
+     * @param string $errorHandlerClass
+     * @param object|null $factory
      */
-    public function __construct(ContainerInterface $container, $factory, string $basePath, string $errorHandlerClass)
+    public function __construct(ContainerInterface $container, string $basePath, string $errorHandlerClass, $factory = null)
     {        
         $this->container = $container;
-        $this->factory = $factory;
+        $this->factory = ($factory == null) ? new Psr17Factory() : $factory;
         $this->basePath = $basePath;
         $this->router = new Router($container,$basePath);  
         $this->errorHandlerClass = $errorHandlerClass;
@@ -213,8 +215,13 @@ class Application
         
         $response = $this->handleRequest($request);
 
-        // emit        
-        (new SapiEmitter())->emit($response);
+        try {
+            // emit        
+            (new SapiEmitter())->emit($response);
+            
+        } catch (Throwable $exception) {           
+            $response = $this->handleException($exception,$request,$response);
+        }
     }
 
     /**
@@ -298,17 +305,17 @@ class Application
     protected function resolveRouteMiddleware(string $middlewareClass, array $options): ?MiddlewareInterface
     {
         $auth = $options['auth'] ?? null;
+      
         if (empty($auth) == false) {
             // auth middleware
             AuthFactory::setUserProvider('session',new Users());
             AuthFactory::setUserProvider('token',new AccessTokens());
 
-            return AuthFactory::createMiddleware($auth,null,[
-                'redirect' => $options['redirect_url'] ?? null
-            ]);
+            $options['authProviders'] = AuthFactory::createAuthProviders($auth,null);
+            $options['redirect'] = $options['redirect_url'] ?? null;            
         } 
 
-        return new $middlewareClass($this->container);
+        return new $middlewareClass($this->container,$options);
     }
 
     /**

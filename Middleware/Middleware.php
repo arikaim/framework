@@ -21,11 +21,11 @@ use Arikaim\Core\Framework\MiddlewareInterface;
 abstract class Middleware implements MiddlewareInterface
 {
     /**
-     * Middleware params
+     * Middleware options
      *
      * @var array
      */
-    protected $params = [];
+    protected $options = [];
 
     /**
      * Container
@@ -46,58 +46,59 @@ abstract class Middleware implements MiddlewareInterface
     /**
      * Constructor
      *
-     * @param array|null $params
+     * @param ContainerInterface|null
+     * @param array|null $options
      */
-    public function __construct($container = null, ?array $params = [])
+    public function __construct(?ContainerInterface $container = null, ?array $options = [])
     {
         $this->container = $container;
-        $this->params = $params ?? [];
+        $this->options = $options ?? [];
     }
     
     /**
-     * Get param value
+     * Get option value
      *
      * @param string $name
      * @param mixed $default
      * @return mixed|null
      */
-    public function getParam(string $name, $default = null)
+    public function getOption(string $name, $default = null)
     {
-        return $this->params[$name] ?? $default;
+        return $this->options[$name] ?? $default;
     }
 
     /**
-     * Set param
+     * Set option
      *
      * @param string $name
      * @param mixed $value
      * @return void
      */
-    public function setParam(string $name, $value): void
+    public function setOption(string $name, $value): void
     {
-        $this->params[$name] = $value;        
+        $this->options[$name] = $value;        
     }
 
     /**
-     * Set param
+     * Set option
      *
      * @param string $name
      * @param mixed $value
      * @return Middleware
      */
-    public function withParam(string $name, $value)
+    public function withOption(string $name, $value)
     {
-        $this->setParam($name,$value);
+        $this->setOption($name,$value);
         
         return $this;
     }
 
     /**
-     * Return all params
+     * Return all options
      *
      * @return array
      */
-    public function getParams(): array
+    public function getOptions(): array
     {
         return $this->params;
     }

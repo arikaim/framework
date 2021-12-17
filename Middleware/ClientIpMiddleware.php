@@ -13,12 +13,13 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 use Arikaim\Core\Utils\ClientIp;
+use Arikaim\Core\Framework\Middleware\Middleware;
 use Arikaim\Core\Framework\MiddlewareInterface;
 
 /**
  * Cient Ip middleware
  */
-class ClientIpMiddleware implements MiddlewareInterface
+class ClientIpMiddleware extends Middleware implements MiddlewareInterface
 { 
     /**
      * Process middleware 

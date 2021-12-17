@@ -12,27 +12,19 @@ namespace Arikaim\Core\Framework\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+use Arikaim\Core\Framework\Middleware\Middleware;
 use Arikaim\Core\Framework\MiddlewareInterface;
 use RuntimeException;
 
 /**
  * Request body parsing
  */
-class BodyParsingMiddleware implements MiddlewareInterface
+class BodyParsingMiddleware extends Middleware implements MiddlewareInterface
 {
     /**
      * @var callable[]
      */
-    protected $bodyParsers;
-
-    /**
-     * Constructor 
-     * 
-     */
-    public function __construct()
-    {
-        $this->registerDefaultBodyParsers();        
-    }
+    protected $parsers;
 
     /**
      * Process middleware 
@@ -44,6 +36,7 @@ class BodyParsingMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, ResponseInterface $response): array
     {    
         if (empty($request->getParsedBody()) == true) {
+            $this->registerDefaultBodyParsers();
             $parsedBody = $this->parseBody($request);
             $request = $request->withParsedBody($parsedBody);
         }
@@ -62,39 +55,34 @@ class BodyParsingMiddleware implements MiddlewareInterface
      * 
      * @param string   $mediaType 
      * @param callable $callable  
-     * @return self
+     * @return void
      */
-    public function registerBodyParser(string $mediaType, callable $callable): self
+    public function registerBodyParser(string $mediaType, callable $callable): void
     {
-        $this->bodyParsers[$mediaType] = $callable;
-
-        return $this;
+        $this->parsers[$mediaType] = $callable;       
     }
 
     /**
      * Return true if parser exist
-     * @param string   $mediaType A HTTP media type (excluding content-type params).
+     * 
+     * @param string   $mediaType 
      * @return boolean
      */
     public function hasBodyParser(string $mediaType): bool
     {
-        return isset($this->bodyParsers[$mediaType]);
+        return isset($this->parsers[$mediaType]);
     }
 
     /**
      * Get parser
      * 
-     * @param string    $mediaType A HTTP media type (excluding content-type params).
-     * @return callable
+     * @param string    $mediaType 
+     * @return callable|null
      * @throws RuntimeException
      */
-    public function getBodyParser(string $mediaType): callable
+    public function getParser(string $mediaType): ?callable
     {
-        if (isset($this->bodyParsers[$mediaType]) == false) {
-            throw new RuntimeException('No parser for type ' . $mediaType);
-        }
-
-        return $this->bodyParsers[$mediaType];
+        return $this->parsers[$mediaType] ?? null;
     }
 
     /**
@@ -105,25 +93,23 @@ class BodyParsingMiddleware implements MiddlewareInterface
     protected function registerDefaultBodyParsers(): void
     {
         // json      
-        $this->registerBodyParser('application/json',function($input) {
-            $result = \json_decode($input,true);
-            return (\is_array($result) == false) ? null : $result;         
-        });
-
-        // form
-        $this->registerBodyParser('application/x-www-form-urlencoded',function($input) {
-            \parse_str($input,$data);
-            return $data;
-        });
-
-        // xml
-        $this->registerBodyParser('application/xml',function($input) {          
-            $result = \simplexml_load_string($input);
-            \libxml_clear_errors();
-            \libxml_use_internal_errors(true);
-
-            return ($result === false) ? null : $result;             
-        });       
+        $this->parsers = [
+            'application/json'                  => function($input) {
+                $result = \json_decode($input,true);
+                return (\is_array($result) == false) ? null : $result;    
+            },
+            'application/x-www-form-urlencoded' => function($input) {
+                \parse_str($input,$data);
+                return $data;
+            },
+            'application/xml'                   => function($input) {          
+                $result = \simplexml_load_string($input);
+                \libxml_clear_errors();
+                \libxml_use_internal_errors(true);
+    
+                return ($result === false) ? null : $result;             
+            }     
+        ];    
     }
 
     /**
@@ -139,31 +125,25 @@ class BodyParsingMiddleware implements MiddlewareInterface
             return null;
         }
 
-        // Check if this specific media type has a parser registered first
-        if (isset($this->bodyParsers[$mediaType]) == false) {
-            $parts = \explode('+', $mediaType);
-            if (count($parts) >= 2) {
-                $mediaType = 'application/' . $parts[count($parts) - 1];
-            }
-        }
-
-        if (isset($this->bodyParsers[$mediaType]) == true) {
+        if (isset($this->parsers[$mediaType]) == true) {
             $body = (string)$request->getBody();
-            $parsed = $this->bodyParsers[$mediaType]($body);
+            $result = $this->parsers[$mediaType]($body);
 
-            if (\is_null($parsed) == false && \is_object($parsed) == false && \is_array($parsed) == false) {
+            if (\is_null($result) == false && \is_object($result) == false && \is_array($result) == false) {
                 throw new RuntimeException(
-                    'Request body media type parser return value must be an array, an object, or null'
+                    'Request body media type parser error.'
                 );
             }
 
-            return $parsed;
+            return $result;
         }
 
         return null;
     }
 
     /**
+     * Get media type
+     * 
      * @param ServerRequestInterface $request
      * @return string|null 
      */
@@ -172,8 +152,8 @@ class BodyParsingMiddleware implements MiddlewareInterface
         $contentType = $request->getHeader('Content-Type')[0] ?? null;
 
         if (\is_string($contentType) == true && \trim($contentType) != '') {
-            $contentTypeParts = \explode(';', $contentType);
-            return \strtolower(\trim($contentTypeParts[0]));
+            $parts = \explode(';', $contentType);
+            return \strtolower(\trim($parts[0]));
         }
 
         return null;

@@ -144,10 +144,10 @@ class Router
      * @param string $method
      * @param string $pattern
      * @param string $handlerClass
-     * @param array|null $options
+     * @param array $options
      * @return void
      */
-    public function addRoute(string $method, string $pattern, string $handlerClass, ?array $options = null): void
+    public function addRoute(string $method, string $pattern, string $handlerClass, array $options = []): void
     {      
         $this->collector->addRoute($method,$this->basePath . $pattern,$handlerClass);
         $this->routeOptions[$method][$handlerClass] = $options;
@@ -158,11 +158,11 @@ class Router
      *
      * @param string $method
      * @param string $handlerClass
-     * @return array|null
+     * @return array
      */
-    public function getRouteOptions(string $method, string $handlerClass): ?array
+    public function getRouteOptions(string $method, string $handlerClass): array
     {
-        return $this->routeOptions[$method][$handlerClass] ?? null;
+        return $this->routeOptions[$method][$handlerClass] ?? [];
     }
 
     /**
@@ -274,12 +274,16 @@ class Router
         }
              
         foreach ($routes as $item) {          
-            $this->addRoute($method,$item['pattern'],$item['handler']);    
+            $this->addRoute($method,$item['pattern'],$item['handler'],[
+                'route_options'        => null,
+                'auth'                 => $item['auth'] ?? null,
+                'redirect_url'         => null,
+                'route_page_name'      => '',
+                'route_extension_name' => ''
+            ]);    
             
-            if (empty($item['middleware']) == false) {
-                $this->addMiddleware($method,$item['handler'],AuthMiddleware::class,[
-                    'auth' => $item['middleware'] ?? null
-                ]); 
+            if (empty($item['auth']) == false) {
+                $this->addMiddleware($method,$item['handler'],AuthMiddleware::class);                  
             }                                         
         }      
     } 
