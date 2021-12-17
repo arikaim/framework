@@ -77,8 +77,12 @@ class ErrorHandler
     public function renderExecption(Throwable $exception, ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {       
         $status = 400;    
-        if (Install::isInstalled() == false) {               
-            if (RouteType::isApiInstallRequest() == false && RouteType::isInstallPage() == false) { 
+      
+        if (Install::isInstalled() == false) {    
+            if (RouteType::isApiInstallRequest() == true) {
+                return $response;
+            }
+            if (RouteType::isInstallPage() == false) { 
                 // redirect to install page                                
                 return $response
                     ->withoutHeader('Cache-Control')

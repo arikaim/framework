@@ -7,7 +7,7 @@
  * @license     http://www.arikaim.com/license
  * 
  */
-namespace Arikaim\Core\Framework;
+namespace Arikaim\Core\Framework\Router;
 
 use FastRoute\Dispatcher\GroupCountBased;
 use FastRoute\RouteCollector;
@@ -15,6 +15,7 @@ use FastRoute\DataGenerator\GroupCountBased as GroupCountBasedGenerator;
 use FastRoute\RouteParser\Std;
 use Psr\Container\ContainerInterface;
 
+use Arikaim\Core\Framework\Router\RouterInterface;
 use Arikaim\Core\Routes\RouteType;
 use Arikaim\Core\Http\Url;
 use Arikaim\Core\Interfaces\RoutesInterface;
@@ -25,7 +26,7 @@ use Exception;
 /**
  * App router
  */
-class Router
+class ArikaimRouter implements RouterInterface
 {
     /**
      * Route collector
@@ -104,7 +105,7 @@ class Router
      * @param string|object $middleware
      * @return void
      */
-    public function addMiddleware(string $method, string $handlerClass, $middleware): void
+    public function addRouteMiddleware(string $method, string $handlerClass, $middleware): void
     {   
         $this->routeMiddlewares[$method][$handlerClass][] = $middleware;
     } 
@@ -242,13 +243,13 @@ class Router
 
             // auth middleware
             if (empty($item['auth']) == false) {                              
-                $this->addMiddleware($method,$handler,AuthMiddleware::class);              
+                $this->addRouteMiddleware($method,$handler,AuthMiddleware::class);              
             } 
     
             $middlewares = (\is_string($item['middlewares']) == true) ? \json_decode($item['middlewares'],true) : $item['middlewares'] ?? [];
             // add middlewares                        
             foreach ($middlewares as $class) {            
-               $this->addMiddleware($method,$handler,$class);                               
+               $this->addRouteMiddleware($method,$handler,$class);                               
             }                                                                 
         }    
         
@@ -283,7 +284,7 @@ class Router
             ]);    
             
             if (empty($item['auth']) == false) {
-                $this->addMiddleware($method,$item['handler'],AuthMiddleware::class);                  
+                $this->addRouteMiddleware($method,$item['handler'],AuthMiddleware::class);                  
             }                                         
         }      
     } 

@@ -13,11 +13,10 @@ use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Nyholm\Psr7Server\ServerRequestCreator;
-use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
-use FastRoute\Dispatcher;
 use Nyholm\Psr7\Factory\Psr17Factory;
 
-use Arikaim\Core\Framework\Router;
+use Arikaim\Core\Framework\ResponseEmiter;
+use Arikaim\Core\Framework\Router\RouterInterface;
 use Arikaim\Core\Framework\MiddlewareInterface;
 use Arikaim\Core\Validator\Validator;
 use Arikaim\Core\Controllers\ErrorController;
@@ -63,16 +62,9 @@ class Application
     /**
      * Router
      *
-     * @var object
+     * @var RouterInterface
      */
     protected $router;
-
-    /**
-     * Base path
-     *
-     * @var string
-     */
-    protected $basePath = '';
 
     /**
      * Error handler
@@ -92,16 +84,19 @@ class Application
      * Constructor
      *
      * @param ContainerInterface $container
-     * @param string $basePath
      * @param string $errorHandlerClass
      * @param object|null $factory
      */
-    public function __construct(ContainerInterface $container, string $basePath, string $errorHandlerClass, $factory = null)
+    public function __construct(
+        ContainerInterface $container, 
+        RouterInterface $router,
+        string $errorHandlerClass, 
+        $factory = null
+    )
     {        
         $this->container = $container;
-        $this->factory = ($factory == null) ? new Psr17Factory() : $factory;
-        $this->basePath = $basePath;
-        $this->router = new Router($container,$basePath);  
+        $this->factory = ($factory == null) ? new Psr17Factory() : $factory;      
+        $this->router = $router;
         $this->errorHandlerClass = $errorHandlerClass;
     }
 
@@ -141,27 +136,17 @@ class Application
     } 
 
     /**
-     * Set base path
-     *
-     * @param string $path
-     * @return void
-     */
-    public function setBasePath(string $path): void
-    {
-        $this->basePath = $path;
-    } 
-
-    /**
      * Add route
      *
      * @param string $method
      * @param string $pattern
      * @param string $handlerClass
+     * @param array $options
      * @return void
      */
-    public function addRoute(string $method, string $pattern, string $handlerClass): void
+    public function addRoute(string $method, string $pattern, string $handlerClass, array $options = []): void
     {
-        $this->router->addRoute($method,$pattern,$handlerClass);
+        $this->router->addRoute($method,$pattern,$handlerClass,$options);
     }
 
     /**
@@ -200,7 +185,7 @@ class Application
      */
     public function addRouteMiddleware(string $method, string $routeHandlerClass, $middleware)
     {      
-        $this->router->addMiddleware($method,$routeHandlerClass,$middleware);
+        $this->router->addRouteMiddleware($method,$routeHandlerClass,$middleware);
     } 
 
     /**
@@ -221,10 +206,11 @@ class Application
 
         try {
             // emit        
-            (new SapiEmitter())->emit($response);
+            (new ResponseEmiter())->emit($response);
 
         } catch (Throwable $exception) {           
             $response = $this->handleException($exception,$request,$response);
+            (new ResponseEmiter())->emit($response);
         }
     }
 
@@ -263,11 +249,11 @@ class Application
 
             $route = $this->router->dispatch($method,$uri);
             switch($route['status']) {
-                case Dispatcher::NOT_FOUND: {
+                case RouterInterface::ROUTE_NOT_FOUND: {
                     $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
                     break;
                 }
-                case Dispatcher::METHOD_NOT_ALLOWED: {
+                case RouterInterface::METHOD_NOT_ALLOWED: {
                     $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
                     break;
                 }
