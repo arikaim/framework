@@ -179,11 +179,15 @@ class Application
      * Add global middleware
      *
      * @param object|string $middleware
+     * @param array $options
      * @return void
      */
-    public function addMiddleware($middleware): void
+    public function addMiddleware($middleware, array $options = []): void
     {   
-        $this->middlewares[] = $middleware;
+        $this->middlewares[] = [
+            'handler' => $middleware,
+            'options' => $options
+        ];
     } 
 
     /**
@@ -218,7 +222,7 @@ class Application
         try {
             // emit        
             (new SapiEmitter())->emit($response);
-            
+
         } catch (Throwable $exception) {           
             $response = $this->handleException($exception,$request,$response);
         }
@@ -229,6 +233,7 @@ class Application
      *
      * @param ServerRequestInterface $request
      * @return ResponseInterface
+     * @throws RuntimeException
      */
     public function handleRequest(ServerRequestInterface $request): ResponseInterface 
     {
@@ -237,9 +242,17 @@ class Application
 
         try {
             // run global middlewares
-            foreach($this->middlewares as $middleware) {
-                $middleware = (\is_string($middleware) == true) ? new $middleware($this->container) : $middleware;
-                list($request,$response) = $middleware->process($request,$response);              
+            foreach($this->middlewares as $item) {
+                if (\is_string($item['handler']) == true) {
+                    $middleware = new $item['handler']($this->container,$item['options'] ?? []);
+                } else {
+                    $middleware = $item['handler'];
+                }
+               
+                if ($middleware instanceof MiddlewareInterface) {
+                    // process if is valid middleware instance
+                    list($request,$response) = $middleware->process($request,$response);     
+                }                   
             }
 
             // dispatch routes
@@ -259,13 +272,14 @@ class Application
                     break;
                 }
             }
-
-            // run route middlewares
-            $middlewares = $this->router->getRouteMiddlewares($method,$route['handler']);
+            // get route options
             $routeOptions = $this->router->getRouteOptions($method,$route['handler']);
 
+            // run route middlewares
+            $middlewares = $this->router->getRouteMiddlewares($method,$route['handler']);          
             foreach($middlewares as $middlewareClass) {
-                $middleware = (\is_string($middlewareClass) == true) ? $this->resolveRouteMiddleware($middlewareClass,$routeOptions) : $middlewareClass;      
+                $middleware = (\is_string($middlewareClass) == true) ? $this->resolveRouteMiddleware($middlewareClass,$routeOptions) : $middlewareClass;
+                               
                 if (($middleware instanceof MiddlewareInterface) == false) {
                     throw new RuntimeException('Not valid route middleware ' . $middlewareClass);
                 }
