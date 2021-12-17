@@ -18,6 +18,7 @@ use Arikaim\Core\App\Install;
 use Arikaim\Core\Routes\RouteType;
 use Arikaim\Core\System\Error\Renderer\HtmlPageErrorRenderer;
 use Arikaim\Core\System\Error\ApplicationError;
+use Arikaim\Core\Framework\Router\RouterInterface;
 use ErrorException;
 use Throwable;
 
@@ -67,6 +68,22 @@ class ErrorHandler
     }
 
     /**
+     * Handle route error
+     *
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     */
+    public function handleRouteError(ResponseInterface $response): ResponseInterface
+    {
+        if (Install::isInstalled() == false && RouteType::isInstallPage() == false) {
+            // redirect to install page                                
+            return $this->redirectToInstallPage($response); 
+        }
+
+        return $response;
+    } 
+
+    /**
      * Render exception
      *
      * @param Throwable $exception
@@ -84,15 +101,8 @@ class ErrorHandler
             }
             if (RouteType::isInstallPage() == false) { 
                 // redirect to install page                                
-                return $response
-                    ->withoutHeader('Cache-Control')
-                    ->withHeader('Cache-Control','no-cache, must-revalidate')
-                    ->withHeader('Content-Length','0')    
-                    ->withHeader('Expires','Sat, 26 Jul 1997 05:00:00 GMT')        
-                    ->withHeader('Location',RouteType::getInstallPageUrl())
-                    ->withStatus(307);                  
-            } 
-                
+                return $this->redirectToInstallPage($response);                  
+            }                 
             return $response;
         }
     
@@ -105,6 +115,23 @@ class ErrorHandler
         $response->getBody()->write($output);
 
         return $response->withStatus($status);      
+    }
+
+    /**
+     * Redirect to install page
+     *
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     */
+    protected function redirectToInstallPage(ResponseInterface $response): ResponseInterface
+    {
+        return $response
+            ->withoutHeader('Cache-Control')
+            ->withHeader('Cache-Control','no-cache, must-revalidate')
+            ->withHeader('Content-Length','0')    
+            ->withHeader('Expires','Sat, 26 Jul 1997 05:00:00 GMT')        
+            ->withHeader('Location',RouteType::getInstallPageUrl())
+            ->withStatus(307);   
     }
 
     /**

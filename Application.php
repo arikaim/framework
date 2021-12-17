@@ -248,16 +248,13 @@ class Application
             $this->router->loadRoutes($method,$uri);
 
             $route = $this->router->dispatch($method,$uri);
-            switch($route['status']) {
-                case RouterInterface::ROUTE_NOT_FOUND: {
-                    $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
-                    break;
-                }
-                case RouterInterface::METHOD_NOT_ALLOWED: {
-                    $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
-                    break;
-                }
+            if ($route['status'] != RouterInterface::ROUTE_FOUND) {
+                // route error
+                $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
+                $this->resolveErrorHandler();
+                $response = $this->errorHandler->handleRouteError($response);
             }
+           
             // get route options
             $routeOptions = $this->router->getRouteOptions($method,$route['handler']);
 
@@ -364,6 +361,8 @@ class Application
 
         return $callable($request,$response,$validator,$route);
     }
+
+   
 
     /**
      * Resolve route handler
