@@ -100,6 +100,6 @@ abstract class Middleware implements MiddlewareInterface
      */
     public function getOptions(): array
     {
-        return $this->params;
+        return $this->options;
     }
 }
