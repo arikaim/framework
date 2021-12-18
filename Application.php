@@ -206,11 +206,11 @@ class Application
 
         try {
             // emit        
-            (new ResponseEmiter())->emit($response);
+            ResponseEmiter::emit($response);
 
         } catch (Throwable $exception) {           
             $response = $this->handleException($exception,$request,$response);
-            (new ResponseEmiter())->emit($response);
+            ResponseEmiter::emit($response);
         }
     }
 

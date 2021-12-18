@@ -16,8 +16,7 @@
         "psr/http-server-middleware": "^1.0",
         "psr/http-server-handler": "^1.0",
         "nyholm/psr7-server": "^1.0",
-        "nyholm/psr7": "1.4.*",
-        "laminas/laminas-httphandlerrunner": "^2.1",        
+        "nyholm/psr7": "1.4.*",      
         "nikic/fast-route": "^1.3",
         "arikaim/container": "^1.1",
         "arikaim/validator": "^1.2"                
