@@ -116,7 +116,13 @@ class Router implements RouterInterface
 
         return [
             (($route ?? null) == null) ? RouterInterface::ROUTE_NOT_FOUND : RouterInterface::ROUTE_FOUND,
-            $route
+            $route ?? [
+                'id'        => null,
+                'methhod'   => $method,
+                'handler'   => null,
+                'regex'     => null,
+                'variables' => []
+            ]  
         ];  
     }
 
