@@ -18,7 +18,6 @@ use Arikaim\Core\App\Install;
 use Arikaim\Core\Routes\RouteType;
 use Arikaim\Core\System\Error\Renderer\HtmlPageErrorRenderer;
 use Arikaim\Core\System\Error\ApplicationError;
-use Arikaim\Core\Framework\Router\RouterInterface;
 use ErrorException;
 use Throwable;
 

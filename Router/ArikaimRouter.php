@@ -9,7 +9,6 @@
  */
 namespace Arikaim\Core\Framework\Router;
 
-use FastRoute\RouteParser\Std as RouteParser;
 use Psr\Container\ContainerInterface;
 
 use Arikaim\Core\Framework\Router\RouterInterface;
@@ -18,22 +17,15 @@ use Arikaim\Core\Http\Url;
 use Arikaim\Core\Interfaces\RoutesInterface;
 use Arikaim\Core\App\SystemRoutes;
 use Arikaim\Core\Access\Middleware\AuthMiddleware;
-use Arikaim\Core\Framework\Router\RouteGenerator;
+use Arikaim\Core\Framework\Router\Router;
 
 use Exception;
 
 /**
  * App router
  */
-class ArikaimRouter implements RouterInterface
+class ArikaimRouter extends Router implements RouterInterface
 {
-    /**
-     * Route generator
-     *
-     * @var RouteGenerator
-     */
-    protected $generator;
-
     /**
      * App container
      *
@@ -49,20 +41,6 @@ class ArikaimRouter implements RouterInterface
     protected $routeLoader;
 
     /**
-     * Route middlewares
-     *
-     * @var array
-     */
-    protected $routeMiddlewares = [];
-
-    /**
-     * Route options
-     *
-     * @var array
-     */
-    protected $routeOptions = [];
-
-    /**
      * Constructor
      *
      * @param ContainerInterface $container
@@ -71,103 +49,10 @@ class ArikaimRouter implements RouterInterface
      */
     public function __construct(ContainerInterface $container, string $basePath, $routeLoader = null)
     {        
-        $this->generator = new RouteGenerator(new RouteParser());
+        parent::__construct($basePath);
+       
         $this->container = $container;
-        $this->basePath = $basePath;
-        $this->routeMiddlewares = [];
-        $this->routeOptions = [];
-
         $this->routeLoader = ($routeLoader == null) ? $container->get('routes') : $routeLoader;
-    }
-
-    /**
-     * Get route middlewares
-     *
-     * @param string $method
-     * @param string $handlerClass
-     * @return array
-     */
-    public function getRouteMiddlewares(string $method, string $handlerClass): array
-    {
-        return $this->routeMiddlewares[$method][$handlerClass] ?? [];
-    }
-
-    /**
-     * Add route middleware
-     *
-     * @param string $method
-     * @param string $handlerClass
-     * @param string|object $middleware
-     * @return void
-     */
-    public function addRouteMiddleware(string $method, string $handlerClass, $middleware): void
-    {   
-        $this->routeMiddlewares[$method][$handlerClass][] = $middleware;
-    } 
-    
-    /**
-     * Get route generator
-     *
-     * @return RouteGenerator
-     */
-    public function getGenerator()
-    {
-        return $this->generator;
-    }
-
-    /**
-     * Dispatch route
-     *
-     * @param string $method
-     * @param string $uri
-     * @return array
-     */
-    public function dispatch(string $method, string $uri): array
-    {
-        list($staticRoutes,$variableRoutes) = $this->generator->getData();
-
-        if (isset($staticRoutes[$method][$uri]) == true) {
-            return [RouterInterface::ROUTE_FOUND,$staticRoutes[$method][$uri]];             
-        }
-      
-        if (isset($variableRoutes[$method]) == true) {
-            $route = $this->dispatchVariableRoute($variableRoutes[$method],$uri);            
-        }
-
-        return [
-            (($route ?? null) == null) ? RouterInterface::ROUTE_NOT_FOUND : RouterInterface::ROUTE_FOUND,
-            $route
-        ];  
-    }
-
-    /**
-     * Add route
-     *
-     * @param string $method
-     * @param string $pattern
-     * @param string $handlerClass
-     * @param array $options
-     * @param string|int|null $routeId
-     * @return void
-     */
-    public function addRoute(string $method, string $pattern, string $handlerClass, array $options = [], $routeId = null): void
-    {      
-        $this->generator->addRoute($method,$this->basePath . $pattern,$handlerClass,$routeId);
-        if (empty($routeId) == false) {
-            $this->routeOptions[$method][$routeId] = $options;
-        }
-    }
-
-    /**
-     * Get reoute options
-     *
-     * @param string $method
-     * @param string|int $id
-     * @return array
-     */
-    public function getRouteOptions(string $method, $id): array
-    {
-        return (empty($id) == true) ? [] : $this->routeOptions[$method][$id] ?? [];
     }
 
     /**
@@ -292,33 +177,4 @@ class ArikaimRouter implements RouterInterface
             }                                         
         }      
     } 
-
-    /**
-     * Dispatch variable route
-     *
-     * @param array $routes
-     * @param string $uri
-     * @return array|null
-     */
-    protected function dispatchVariableRoute(array $routes, string $uri): ?array
-    {
-        foreach ($routes as $data) {
-            if (\preg_match($data['regex'],$uri,$matches) == false) {
-                continue;
-            }
-
-            $route = $data['routeMap'][\count($matches)];
-            $vars = [];
-            $index = 0;
-
-            foreach ($route['variables'] as $varName) {
-                $vars[$varName] = $matches[++$index];
-            }
-            $route['variables'] = $vars;
-
-            return $route;
-        }
-
-        return null;
-    }
 }
