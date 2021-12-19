@@ -2,27 +2,42 @@
 
 namespace Arikaim\Core\Framework\Router;
 
-use FastRoute\DataGenerator\RegexBasedAbstract;
+use FastRoute\RouteParser;
+
 use Exception;
 
 /**
  * Route generator class
  */
-class RouteGenerator extends RegexBasedAbstract
+class RouteGenerator 
 {
+    /**
+     * Static routes
+     *
+     * @var array
+     */
+    protected $staticRoutes = [];
+ 
+    /**
+     * Variable routes map
+     *
+     * @var array
+     */
+    protected $routesMap = [];
+
     /**
      * Route parser
      *
-     * @var object
+     * @var RouteParser
      */
     protected $routeParser;
 
     /**
      * Constructor
      *
-     * @param object $routeParser
+     * @param RouteParser $routeParser
      */
-    public function __construct($routeParser)
+    public function __construct(RouteParser $routeParser)
     {
         $this->routeParser = $routeParser;      
     }
@@ -36,7 +51,7 @@ class RouteGenerator extends RegexBasedAbstract
      * @param string|int|null $id
      * @return void
      */
-    public function addRoute($method, $pattern, $handler, $id = null)
+    public function addRoute(string $method, string $pattern, $handler, $id = null): void
     {
         $data = $this->routeParser->parse($pattern);
 
@@ -48,6 +63,27 @@ class RouteGenerator extends RegexBasedAbstract
             }
         }
     }
+
+    /**
+     * Get routes data
+     *
+     * @return array
+     */
+    public function getData(): array
+    {
+        $variableRoutes = [];
+        foreach ($this->routesMap as $method => $regexToRoutesMap) {
+            $count = \count($regexToRoutesMap);
+            $numParts = \max(1,\round($count / 10));
+            $chunkSize = \ceil($count / $numParts);
+
+            $chunks = \array_chunk($regexToRoutesMap,$chunkSize,true);
+            $variableRoutes[$method] = \array_map([$this,'processChunk'],$chunks);
+        }
+
+        return [$this->staticRoutes,$variableRoutes];
+    }
+    
 
     /**
      * Add static route
@@ -62,15 +98,15 @@ class RouteGenerator extends RegexBasedAbstract
     {
         $routeStr = $data[0];
 
-        if (isset($this->staticRoutes[$method][$routeStr])) {
-            throw new Exception(sprintf('Route exist "%s" for "%s"',$routeStr,$method));
+        if (isset($this->staticRoutes[$method][$routeStr]) == true) {
+            throw new Exception(\sprintf('Route exist "%s" for "%s"',$routeStr,$method));
         }
 
-        if (isset($this->methodToRegexToRoutesMap[$method])) {
-            foreach ($this->methodToRegexToRoutesMap[$method] as $route) {               
+        if (isset($this->routesMap[$method]) == true) {
+            foreach ($this->routesMap[$method] as $route) {               
                 $match = (bool)\preg_match('~^' . $route['regex'] . '$~',$routeStr);
                 if ($match == true) {
-                    throw new Exception(sprintf('Route "%s" is shadowed by "%s" for "%s"',$routeStr,$route['regex'],$method));
+                    throw new Exception(\sprintf('Route "%s" is shadowed by "%s" for "%s"',$routeStr,$route['regex'],$method));
                 }
             }
         }
@@ -97,11 +133,11 @@ class RouteGenerator extends RegexBasedAbstract
     {
         list($regex,$variables) = $this->buildRegexForRoute($data);
 
-        if (isset($this->methodToRegexToRoutesMap[$method][$regex])) {
+        if (isset($this->routesMap[$method][$regex]) == true) {
             throw new Exception(\sprintf('Cannot register two routes matching "%s" for method "%s"',$regex,$method));
         }
 
-        $this->methodToRegexToRoutesMap[$method][$regex] = [
+        $this->routesMap[$method][$regex] = [
             'id'        => $id,
             'methhod'   => $method,
             'handler'   => $handler,
@@ -142,18 +178,19 @@ class RouteGenerator extends RegexBasedAbstract
         return [$regex,$variables];
     }
 
-    protected function getApproxChunkSize()
-    {
-        return 10;
-    }
-
-    protected function processChunk($regexToRoutesMap)
+    /**
+     * Process chunks
+     *
+     * @param array $regexToRoutesMap
+     * @return array
+     */
+    protected function processChunk(array $data): array
     {
         $routeMap = [];
         $regexes = [];
         $numGroups = 0;
 
-        foreach ($regexToRoutesMap as $regex => $route) {
+        foreach ($data as $regex => $route) {
             $numVariables = \count($route['variables']);
             $numGroups = \max($numGroups,$numVariables);
 

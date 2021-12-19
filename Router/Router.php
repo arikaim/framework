@@ -155,7 +155,7 @@ class Router implements RouterInterface
     {
         return (empty($id) == true) ? [] : $this->routeOptions[$method][$id] ?? [];
     }
-
+    
     /**
      * Load routes
      *
