@@ -9,10 +9,7 @@
  */
 namespace Arikaim\Core\Framework\Router;
 
-use FastRoute\Dispatcher\GroupCountBased;
-use FastRoute\RouteCollector;
-use FastRoute\DataGenerator\GroupCountBased as GroupCountBasedGenerator;
-use FastRoute\RouteParser\Std;
+use FastRoute\RouteParser\Std as RouteParser;
 use Psr\Container\ContainerInterface;
 
 use Arikaim\Core\Framework\Router\RouterInterface;
@@ -21,6 +18,8 @@ use Arikaim\Core\Http\Url;
 use Arikaim\Core\Interfaces\RoutesInterface;
 use Arikaim\Core\App\SystemRoutes;
 use Arikaim\Core\Access\Middleware\AuthMiddleware;
+use Arikaim\Core\Framework\Router\RouteGenerator;
+
 use Exception;
 
 /**
@@ -29,11 +28,11 @@ use Exception;
 class ArikaimRouter implements RouterInterface
 {
     /**
-     * Route collector
+     * Route generator
      *
-     * @var RouteCollector
+     * @var RouteGenerator
      */
-    protected $collector;
+    protected $generator;
 
     /**
      * App container
@@ -72,11 +71,7 @@ class ArikaimRouter implements RouterInterface
      */
     public function __construct(ContainerInterface $container, string $basePath, $routeLoader = null)
     {        
-        $this->collector = new RouteCollector(
-            new Std(),
-            new GroupCountBasedGenerator()
-        );     
-
+        $this->generator = new RouteGenerator(new RouteParser());
         $this->container = $container;
         $this->basePath = $basePath;
         $this->routeMiddlewares = [];
@@ -111,13 +106,13 @@ class ArikaimRouter implements RouterInterface
     } 
     
     /**
-     * Get route collector
+     * Get route generator
      *
-     * @return RouteCollector
+     * @return RouteGenerator
      */
-    public function getCollector()
+    public function getGenerator()
     {
-        return $this->collector;
+        return $this->generator;
     }
 
     /**
@@ -129,14 +124,20 @@ class ArikaimRouter implements RouterInterface
      */
     public function dispatch(string $method, string $uri): array
     {
-        $dispatcher = new GroupCountBased($this->collector->getData());
-        $info = $dispatcher->dispatch($method,$uri);
-    
-        return [      
-            'status'  => $info[0] ?? 0,          
-            'handler' => $info[1] ?? null,
-            'vars'    => $info[2] ?? []
-        ];       
+        list($staticRoutes,$variableRoutes) = $this->generator->getData();
+
+        if (isset($staticRoutes[$method][$uri]) == true) {
+            return [RouterInterface::ROUTE_FOUND,$staticRoutes[$method][$uri]];             
+        }
+      
+        if (isset($variableRoutes[$method]) == true) {
+            $route = $this->dispatchVariableRoute($variableRoutes[$method],$uri);            
+        }
+
+        return [
+            (($route ?? null) == null) ? RouterInterface::ROUTE_NOT_FOUND : RouterInterface::ROUTE_FOUND,
+            $route
+        ];  
     }
 
     /**
@@ -146,24 +147,27 @@ class ArikaimRouter implements RouterInterface
      * @param string $pattern
      * @param string $handlerClass
      * @param array $options
+     * @param string|int|null $routeId
      * @return void
      */
-    public function addRoute(string $method, string $pattern, string $handlerClass, array $options = []): void
+    public function addRoute(string $method, string $pattern, string $handlerClass, array $options = [], $routeId = null): void
     {      
-        $this->collector->addRoute($method,$this->basePath . $pattern,$handlerClass);
-        $this->routeOptions[$method][$handlerClass] = $options;
+        $this->generator->addRoute($method,$this->basePath . $pattern,$handlerClass,$routeId);
+        if (empty($routeId) == false) {
+            $this->routeOptions[$method][$routeId] = $options;
+        }
     }
 
     /**
      * Get reoute options
      *
      * @param string $method
-     * @param string $handlerClass
+     * @param string|int $id
      * @return array
      */
-    public function getRouteOptions(string $method, string $handlerClass): array
+    public function getRouteOptions(string $method, $id): array
     {
-        return $this->routeOptions[$method][$handlerClass] ?? [];
+        return (empty($id) == true) ? [] : $this->routeOptions[$method][$id] ?? [];
     }
 
     /**
@@ -239,7 +243,7 @@ class ArikaimRouter implements RouterInterface
                 'redirect_url'         => (empty($item['redirect_url']) == false) ? Url::BASE_URL . $item['redirect_url'] : null,
                 'route_page_name'      => $item['page_name'] ?? '',
                 'route_extension_name' => $item['extension_name'] ?? ''
-            ]);
+            ],$item['uuid']);
 
             // auth middleware
             if (empty($item['auth']) == false) {                              
@@ -288,4 +292,33 @@ class ArikaimRouter implements RouterInterface
             }                                         
         }      
     } 
+
+    /**
+     * Dispatch variable route
+     *
+     * @param array $routes
+     * @param string $uri
+     * @return array|null
+     */
+    protected function dispatchVariableRoute(array $routes, string $uri): ?array
+    {
+        foreach ($routes as $data) {
+            if (\preg_match($data['regex'],$uri,$matches) == false) {
+                continue;
+            }
+
+            $route = $data['routeMap'][\count($matches)];
+            $vars = [];
+            $index = 0;
+
+            foreach ($route['variables'] as $varName) {
+                $vars[$varName] = $matches[++$index];
+            }
+            $route['variables'] = $vars;
+
+            return $route;
+        }
+
+        return null;
+    }
 }

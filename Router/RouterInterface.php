@@ -25,9 +25,10 @@ interface RouterInterface
      * @param string $pattern
      * @param string $handlerClass
      * @param array $options
+     * @param string|int|null $routeId
      * @return void
      */
-    public function addRoute(string $method, string $pattern, string $handlerClass, array $options = []): void;
+    public function addRoute(string $method, string $pattern, string $handlerClass, array $options = [], $routeId = null): void;
 
     /**
      * Get route middlewares
@@ -42,10 +43,10 @@ interface RouterInterface
      * Get reoute options
      *
      * @param string $method
-     * @param string $handlerClass
+     * @param string|int $id
      * @return array
      */
-    public function getRouteOptions(string $method, string $handlerClass): array;
+    public function getRouteOptions(string $method, $id): array;
 
     /**
      * Load routes

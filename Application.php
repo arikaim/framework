@@ -142,11 +142,12 @@ class Application
      * @param string $pattern
      * @param string $handlerClass
      * @param array $options
+     * @param string|int|null $routeId
      * @return void
      */
-    public function addRoute(string $method, string $pattern, string $handlerClass, array $options = []): void
+    public function addRoute(string $method, string $pattern, string $handlerClass, array $options = [], $routeId = null): void
     {
-        $this->router->addRoute($method,$pattern,$handlerClass,$options);
+        $this->router->addRoute($method,$pattern,$handlerClass,$options,$routeId);
     }
 
     /**
@@ -247,8 +248,8 @@ class Application
         
             $this->router->loadRoutes($method,$uri);
 
-            $route = $this->router->dispatch($method,$uri);
-            if ($route['status'] != RouterInterface::ROUTE_FOUND) {
+            list($status,$route) = $this->router->dispatch($method,$uri);
+            if ($status != RouterInterface::ROUTE_FOUND) {
                 // route error
                 $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
                 $this->resolveErrorHandler();
@@ -256,7 +257,7 @@ class Application
             }
            
             // get route options
-            $routeOptions = $this->router->getRouteOptions($method,$route['handler']);
+            $routeOptions = $this->router->getRouteOptions($method,$route['id']);
 
             // run route middlewares
             $middlewares = $this->router->getRouteMiddlewares($method,$route['handler']);          
@@ -345,7 +346,7 @@ class Application
     protected function handleRoute(array $route, ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {            
         $body = $request->getParsedBody();        
-        $data = \array_merge($route['vars'],(\is_array($body) == false) ? [] : $body);
+        $data = \array_merge($route['variables'],(\is_array($body) == false) ? [] : $body);
         
         $callable = $this->resolveCallable($route['handler'],$response);
        
