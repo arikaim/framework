@@ -59,12 +59,14 @@ class ArikaimRouter extends Router implements RouterInterface
     /**
      * Load routes
      *
-     * @param string $method
-     * @param string $path
+     * @param mixed $options  
      * @return void
      */
-    public function loadRoutes(string $method, string $path): void
+    public function loadRoutes(...$options): void
     {
+        $method = $options[0];
+        $path = $options[1];
+        
         $routePath = \rtrim(\str_replace(BASE_PATH,'',$path),'/');
         // set current path       
         $type = RouteType::getType($routePath);

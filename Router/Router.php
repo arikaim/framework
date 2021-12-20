@@ -106,11 +106,9 @@ class Router implements RouterInterface
     {
         list($staticRoutes,$variableRoutes) = $this->generator->getData();
 
-        if (isset($staticRoutes[$method][$uri]) == true) {
-            return [RouterInterface::ROUTE_FOUND,$staticRoutes[$method][$uri]];             
-        }
-      
-        if (isset($variableRoutes[$method]) == true) {
+        if (isset($staticRoutes[$method][$uri]) == true) {         
+            $route = $staticRoutes[$method][$uri];             
+        } elseif (isset($variableRoutes[$method]) == true) {
             $route = $this->dispatchVariableRoute($variableRoutes[$method],$uri);            
         }
 
@@ -159,11 +157,10 @@ class Router implements RouterInterface
     /**
      * Load routes
      *
-     * @param string $method
-     * @param string $path
+     * @param mixed $options  
      * @return void
      */
-    public function loadRoutes(string $method, string $path): void
+    public function loadRoutes(...$options): void
     {       
     }
 

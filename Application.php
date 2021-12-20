@@ -26,7 +26,6 @@ use Arikaim\Core\Models\AccessTokens;
 use PDOException;
 use RuntimeException;
 use Throwable;
-use ErrorException;
 
 /**
  * Application
@@ -101,11 +100,22 @@ class Application
     }
 
     /**
+     * Swt router
+     *
+     * @param RouterInterface $router
+     * @return void
+     */
+    public function setRouter(RouterInterface $router): void
+    {
+        $this->router = $router;
+    }
+
+    /**
      * Get router
      *
      * @return RouterInterface
      */
-    public function gteRouter(): RouterInterface
+    public function getRouter(): RouterInterface
     {
         return $this->router;
     }
@@ -138,10 +148,6 @@ class Application
      */
     public function setErrorHandler(string $handlerClass): void
     {
-        \set_error_handler(function($num, $message, $file, $line) {
-            throw new ErrorException($message,0,$num,$file,$line);
-        });
-
         $this->errorHandlerClass = $handlerClass;
     } 
 
@@ -212,10 +218,12 @@ class Application
             $creator = new ServerRequestCreator($this->factory,$this->factory,$this->factory,$this->factory);
             $request = $creator->fromGlobals();
         }
-        
+     
+        // load routes
         $this->router->loadRoutes($request->getMethod(),$request->getUri()->getPath());
 
-        $response = $this->handleRequest($request);
+        // handle
+        $response = $this->handleRequest($request,$this->factory->createResponse(200));
 
         try {
             // emit        
@@ -234,11 +242,8 @@ class Application
      * @return ResponseInterface
      * @throws RuntimeException
      */
-    public function handleRequest(ServerRequestInterface $request): ResponseInterface 
+    public function handleRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface 
     {
-        // create empty response
-        $response = $this->factory->createResponse(200);
-
         try {
             // run global middlewares
             foreach($this->middlewares as $item) {

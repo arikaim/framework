@@ -51,11 +51,11 @@ interface RouterInterface
     /**
      * Load routes
      *
-     * @param string $method
-     * @param string $path
+     * @param mixed $options
+  
      * @return void
      */
-    public function loadRoutes(string $method, string $path): void;
+    public function loadRoutes(...$options): void;
 
     /**
      * Dispatch route
