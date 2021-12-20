@@ -363,8 +363,6 @@ class Application
         return $callable($request,$response,$validator,$route);
     }
 
-   
-
     /**
      * Resolve route handler
      *

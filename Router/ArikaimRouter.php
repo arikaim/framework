@@ -18,6 +18,7 @@ use Arikaim\Core\Interfaces\RoutesInterface;
 use Arikaim\Core\App\SystemRoutes;
 use Arikaim\Core\Access\Middleware\AuthMiddleware;
 use Arikaim\Core\Framework\Router\Router;
+use Arikaim\Core\Utils\Uuid;
 
 use Exception;
 
@@ -170,7 +171,7 @@ class ArikaimRouter extends Router implements RouterInterface
                 'redirect_url'         => null,
                 'route_page_name'      => '',
                 'route_extension_name' => ''
-            ]);    
+            ],Uuid::create());    
             
             if (empty($item['auth']) == false) {
                 $this->addRouteMiddleware($method,$item['handler'],AuthMiddleware::class);                  
