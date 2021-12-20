@@ -34,7 +34,7 @@ class BodyParsingMiddleware extends Middleware implements MiddlewareInterface
      * @return array [$request,$response]
      */
     public function process(ServerRequestInterface $request, ResponseInterface $response): array
-    {    
+    {          
         if (empty($request->getParsedBody()) == true) {
             $this->registerDefaultBodyParsers();
             $parsedBody = $this->parseBody($request);
@@ -43,7 +43,7 @@ class BodyParsingMiddleware extends Middleware implements MiddlewareInterface
 
         // Add Content-Length header if not already added
         $size = $response->getBody()->getSize();
-        if ($size !== null && !$response->hasHeader('Content-Length')) {
+        if ($size !== null && $response->hasHeader('Content-Length') == false) {
             $response = $response->withHeader('Content-Length',(string)$size);
         }
 

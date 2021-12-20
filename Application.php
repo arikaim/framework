@@ -101,6 +101,16 @@ class Application
     }
 
     /**
+     * Get router
+     *
+     * @return RouterInterface
+     */
+    public function gteRouter(): RouterInterface
+    {
+        return $this->router;
+    }
+
+    /**
      * Return psr17 factory
      *
      * @return object
@@ -203,6 +213,8 @@ class Application
             $request = $creator->fromGlobals();
         }
         
+        $this->router->loadRoutes($request->getMethod(),$request->getUri()->getPath());
+
         $response = $this->handleRequest($request);
 
         try {
@@ -246,8 +258,6 @@ class Application
             $uri = $request->getUri()->getPath();
             $method = $request->getMethod();
         
-            $this->router->loadRoutes($method,$uri);
-
             list($status,$route) = $this->router->dispatch($method,$uri);
             if ($status != RouterInterface::ROUTE_FOUND) {
                 // route error
