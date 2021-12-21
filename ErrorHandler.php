@@ -16,8 +16,8 @@ use Psr\Http\Message\ResponseInterface;
 use Arikaim\Core\Http\Request;
 use Arikaim\Core\App\Install;
 use Arikaim\Core\Routes\RouteType;
-use Arikaim\Core\System\Error\Renderer\HtmlPageErrorRenderer;
 use Arikaim\Core\System\Error\ApplicationError;
+use Arikaim\Core\System\Error\ErrorHandlerInterface;
 use ErrorException;
 use Throwable;
 
@@ -36,7 +36,7 @@ class ErrorHandler
     /**
      * Error renderer
      *
-     * @var object|null
+     * @var ErrorHandlerInterface|null
      */
     protected $renderer = null;
 
@@ -46,7 +46,7 @@ class ErrorHandler
      * @param ContainerInterface|null $container
      * @param object|null $renderer
      */
-    public function __construct(?ContainerInterface $container = null, $renderer = null)
+    public function __construct(?ContainerInterface $container = null, ?ErrorHandlerInterface $renderer = null)
     {        
         $this->container = $container;    
         $this->renderer = $renderer;            
@@ -141,9 +141,7 @@ class ErrorHandler
     private function resolveRenderer(): void
     {
         if ($this->renderer == null) {
-            $this->renderer = new ApplicationError(
-                new HtmlPageErrorRenderer($this->container->get('page'))
-            );  
+            $this->renderer = new ApplicationError($this->container->get('page'));              
         }
     } 
 }
