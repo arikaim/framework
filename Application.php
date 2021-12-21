@@ -245,10 +245,15 @@ class Application
     public function handleRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface 
     {
         try {
-            // run global middlewares
+    
             foreach($this->middlewares as $item) {
-                if (\is_string($item['handler']) == true) {
-                    $middleware = new $item['handler']($this->container,$item['options'] ?? []);
+                $handler = $item['handler'] ?? '';
+            
+                if (empty($handler) == true) {
+                    continue;
+                }
+                if (\class_exists($handler) == true) {
+                    $middleware = new $handler($this->container,$item['options'] ?? []);
                 } else {
                     $middleware = $item['handler'];
                 }
@@ -264,10 +269,12 @@ class Application
             $method = $request->getMethod();
         
             list($status,$route) = $this->router->dispatch($method,$uri);
+          
             if ($status != RouterInterface::ROUTE_FOUND) {
                 // route error
                 $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
                 $this->resolveErrorHandler();
+            
                 $response = $this->errorHandler->handleRouteError($response);
             }
            
@@ -346,7 +353,7 @@ class Application
     ): ResponseInterface
     {
         $this->resolveErrorHandler();
-       
+         
         return $this->errorHandler->renderExecption($exception,$request,$response);
     }
 
