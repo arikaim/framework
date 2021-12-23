@@ -93,8 +93,6 @@ class ErrorHandler
      */
     public function renderExecption(Throwable $exception, ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {       
-        $status = 400;    
-      
         if (Install::isInstalled() == false) {    
             if (RouteType::isApiInstallRequest() == true) {
                 return $response;
@@ -109,7 +107,9 @@ class ErrorHandler
         $this->resolveRenderer();
 
         if ($exception instanceof AccessDeniedException) {
-            $response = ($exception->getResponse() != null) ? $exception->getResponse() : $response;              
+            if ($exception->getResponse() != null) {
+                return $exception->getResponse();
+            }                        
         }
         // render errror
         $renderType = (Request::isJsonContentType($request) == true) ? 'json' : 'html';
@@ -117,7 +117,7 @@ class ErrorHandler
         $output = $this->renderer->renderError($exception,$renderType);
         $response->getBody()->write($output);
 
-        return $response->withStatus($status);      
+        return $response->withStatus(400);      
     }
 
     /**
