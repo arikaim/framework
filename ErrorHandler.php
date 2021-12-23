@@ -18,6 +18,7 @@ use Arikaim\Core\App\Install;
 use Arikaim\Core\Routes\RouteType;
 use Arikaim\Core\System\Error\ApplicationError;
 use Arikaim\Core\System\Error\ErrorHandlerInterface;
+use Arikaim\Core\Access\AccessDeniedException;
 use ErrorException;
 use Throwable;
 
@@ -107,6 +108,9 @@ class ErrorHandler
     
         $this->resolveRenderer();
 
+        if ($exception instanceof AccessDeniedException) {
+            $response = ($exception->getResponse() != null) ? $exception->getResponse() : $response;              
+        }
         // render errror
         $renderType = (Request::isJsonContentType($request) == true) ? 'json' : 'html';
        

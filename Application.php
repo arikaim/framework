@@ -330,9 +330,7 @@ class Application
             // auth middleware
             AuthFactory::setUserProvider('session',new Users());
             AuthFactory::setUserProvider('token',new AccessTokens());
-
-            $options['authProviders'] = AuthFactory::createAuthProviders($auth,null);
-            $options['redirect'] = $options['redirect_url'] ?? null;            
+            $options['authProviders'] = AuthFactory::createAuthProviders($auth,null);              
         } 
 
         return new $middlewareClass($this->container,$options);

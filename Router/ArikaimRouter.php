@@ -13,7 +13,6 @@ use Psr\Container\ContainerInterface;
 
 use Arikaim\Core\Framework\Router\RouterInterface;
 use Arikaim\Core\Routes\RouteType;
-use Arikaim\Core\Http\Url;
 use Arikaim\Core\Interfaces\RoutesInterface;
 use Arikaim\Core\App\SystemRoutes;
 use Arikaim\Core\Access\Middleware\AuthMiddleware;
@@ -126,7 +125,7 @@ class ArikaimRouter extends Router implements RouterInterface
             $this->addRoute($method,$item['pattern'],$handler,[
                 'route_options'        => $item['options'] ?? null,
                 'auth'                 => $item['auth'],
-                'redirect_url'         => (empty($item['redirect_url']) == false) ? Url::BASE_URL . $item['redirect_url'] : null,
+                'redirect'             => (empty($item['redirect_url']) == false) ? BASE_PATH . $item['redirect_url'] : null,
                 'route_page_name'      => $item['page_name'] ?? '',
                 'route_extension_name' => $item['extension_name'] ?? ''
             ],$item['uuid']);
@@ -168,7 +167,7 @@ class ArikaimRouter extends Router implements RouterInterface
             $this->addRoute($method,$item['pattern'],$item['handler'],[
                 'route_options'        => null,
                 'auth'                 => $item['auth'] ?? null,
-                'redirect_url'         => null,
+                'redirect'             => null,
                 'route_page_name'      => '',
                 'route_extension_name' => ''
             ],Uuid::create());    
