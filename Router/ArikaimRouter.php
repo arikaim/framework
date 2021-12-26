@@ -79,12 +79,13 @@ class ArikaimRouter extends Router implements RouterInterface
                 // add admin twig extension                
                 $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);
                 // map control panel page
-                $this->addRoute('GET','/admin[/{language:[a-z]{2}}/]','Arikaim\Core\App\ControlPanel:loadControlPanel');                
+                $this->addRoute('GET','/admin[/{language:[a-z]{2}}/]','Arikaim\Core\App\ControlPanel:loadControlPanel'); 
+                $this->mapSystemRoutes($method);             
                 break;
             case RouteType::SYSTEM_API_URL: 
                 // add admin twig extension
                 $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);                 
-                $this->mapSystemRoutes($method);       
+                $this->mapSystemRoutes($method);      
                 break;
             case RouteType::API_URL: 
                 // api routes only 
@@ -123,7 +124,7 @@ class ArikaimRouter extends Router implements RouterInterface
         foreach($routes as $item) {
             $handler = $item['handler_class'] . ':' . $item['handler_method'];
             $this->addRoute($method,$item['pattern'],$handler,[
-                'route_options'        => $item['options'] ?? null,
+                'route_options'        => (empty($item['options'] ?? null) == true) ? [] : \json_decode($item['options'],true),
                 'auth'                 => $item['auth'],
                 'redirect'             => (empty($item['redirect_url']) == false) ? BASE_PATH . $item['redirect_url'] : null,
                 'route_page_name'      => $item['page_name'] ?? '',
@@ -152,20 +153,12 @@ class ArikaimRouter extends Router implements RouterInterface
      * @return void
      */
     protected function mapSystemRoutes(string $method): void
-    {       
-        if (RouteType::isApiInstallRequest() == true) {         
-            $routes = SystemRoutes::$installRoutes[$method] ?? false;
-        } else {
-            $routes = SystemRoutes::$routes[$method] ?? false;
-        }
-
-        if ($routes === false) {
-            return;
-        }
-             
+    {               
+        $routes = SystemRoutes::$routes[$method] ?? [];
+           
         foreach ($routes as $item) {          
             $this->addRoute($method,$item['pattern'],$item['handler'],[
-                'route_options'        => null,
+                'route_options'        => [],
                 'auth'                 => $item['auth'] ?? null,
                 'redirect'             => null,
                 'route_page_name'      => '',

@@ -19,6 +19,8 @@ use Arikaim\Core\Routes\RouteType;
 use Arikaim\Core\System\Error\ApplicationError;
 use Arikaim\Core\System\Error\ErrorHandlerInterface;
 use Arikaim\Core\Access\AccessDeniedException;
+use Arikaim\Core\Validator\DataValidatorException;
+use Arikaim\Core\Http\ApiResponse;
 use ErrorException;
 use Throwable;
 
@@ -106,11 +108,19 @@ class ErrorHandler
     
         $this->resolveRenderer();
 
+        // access denied
         if ($exception instanceof AccessDeniedException) {
             if ($exception->getResponse() != null) {
                 return $exception->getResponse();
             }                        
         }
+        // validation exception
+        if ($exception instanceof DataValidatorException) {
+            $apiResponse = new ApiResponse($response);
+            $apiResponse->setErrors($exception->getErrors());
+            return $apiResponse->getResponse();
+        }
+
         // render errror
         $renderType = (Request::isJsonContentType($request) == true) ? 'json' : 'html';
        
