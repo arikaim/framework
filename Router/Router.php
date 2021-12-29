@@ -137,7 +137,9 @@ class Router implements RouterInterface
     public function addRoute(string $method, string $pattern, string $handlerClass, array $options = [], $routeId = null): void
     {      
         $this->generator->addRoute($method,$this->basePath . $pattern,$handlerClass,$routeId);
+               
         if (empty($routeId) == false) {
+            $options['id'] = $routeId;
             $this->routeOptions[$method][$routeId] = $options;
         }
     }

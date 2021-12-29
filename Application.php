@@ -239,14 +239,12 @@ class Application
      * Handle http request
      *
      * @param ServerRequestInterface $request
-     * @return ResponseInterface
-     * @throws RuntimeException
+     * @return ResponseInterface   
      */
     public function handleRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface 
     {
-        try {
-    
-            foreach($this->middlewares as $item) {
+        try {    
+            foreach ($this->middlewares as $item) {
                 $handler = $item['handler'] ?? '';
             
                 if (empty($handler) == true) {
@@ -283,24 +281,19 @@ class Application
 
             // run route middlewares
             $middlewares = $this->router->getRouteMiddlewares($method,$route['handler']);          
-            foreach($middlewares as $middlewareClass) {
+            foreach ($middlewares as $middlewareClass) {
                 $middleware = (\is_string($middlewareClass) == true) ? $this->resolveRouteMiddleware($middlewareClass,$routeOptions) : $middlewareClass;
                                
-                if (($middleware instanceof MiddlewareInterface) == false) {
-                    throw new RuntimeException('Not valid route middleware ' . $middlewareClass);
-                }
-        
-                list($request,$response) = $middleware->process($request,$response);                 
+                if ($middleware instanceof MiddlewareInterface) {
+                    list($request,$response) = $middleware->process($request,$response);       
+                }                
             }
 
-            // add rouet options
-            $request = $request
-                ->withAttribute('route',$routeOptions)
-                ->withAttribute('current_path',$uri);
+            // add route options
+            $request = $request->withAttribute('route',$routeOptions);
                     
             // call route controller
             $response = $this->handleRoute($route,$request,$response);
-
         } 
         catch (PDOException $exception) {
             $response = $this->handleException($exception,$request,$response);         
@@ -333,7 +326,7 @@ class Application
             $options['authProviders'] = AuthFactory::createAuthProviders($auth,null);              
         } 
 
-        return new $middlewareClass($this->container,$options);
+        return (\class_exists($middlewareClass) == true) ? new $middlewareClass($this->container,$options) : null;
     }
 
     /**
@@ -404,7 +397,7 @@ class Application
      *
      * @return void
      */
-    private function resolveErrorHandler()
+    private function resolveErrorHandler(): void
     {
         if ($this->errorHandler == null) {
             $this->errorHandler = new $this->errorHandlerClass($this->container);

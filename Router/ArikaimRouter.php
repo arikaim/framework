@@ -123,7 +123,7 @@ class ArikaimRouter extends Router implements RouterInterface
        
         foreach($routes as $item) {
             $handler = $item['handler_class'] . ':' . $item['handler_method'];
-            $this->addRoute($method,$item['pattern'],$handler,[
+            $this->addRoute($method,$item['pattern'],$handler,[              
                 'route_options'        => (empty($item['options'] ?? null) == true) ? [] : \json_decode($item['options'],true),
                 'auth'                 => $item['auth'],
                 'redirect'             => (empty($item['redirect_url']) == false) ? BASE_PATH . $item['redirect_url'] : null,
