@@ -77,9 +77,15 @@ class ErrorHandler
      */
     public function handleRouteError(ResponseInterface $response): ResponseInterface
     {
-        if (Install::isInstalled() == false && RouteType::isInstallPage() == false) {
-            // redirect to install page                                
-            return $this->redirectToInstallPage($response); 
+        if (Install::isInstalled() == false) {    
+            if (RouteType::isApiInstallRequest() == true) {
+                return $response;
+            }
+            if (RouteType::isInstallPage() == false) { 
+                // redirect to install page                                
+                return $this->redirectToInstallPage($response);                  
+            }                 
+            return $response;
         }
 
         return $response;

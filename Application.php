@@ -23,8 +23,7 @@ use Arikaim\Core\Controllers\ErrorController;
 use Arikaim\Core\Access\AuthFactory;
 use Arikaim\Core\Models\Users;
 use Arikaim\Core\Models\AccessTokens;
-use PDOException;
-use RuntimeException;
+use Arikaim\Core\Routes\RouteType;
 use Throwable;
 
 /**
@@ -273,7 +272,7 @@ class Application
                 $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
                 $this->resolveErrorHandler();
             
-                $response = $this->errorHandler->handleRouteError($response);
+                return $this->errorHandler->handleRouteError($response);
             }
            
             // get route options
@@ -295,14 +294,11 @@ class Application
             // call route controller
             $response = $this->handleRoute($route,$request,$response);
         } 
-        catch (PDOException $exception) {
-            $response = $this->handleException($exception,$request,$response);         
-        }  
-        catch (RuntimeException $exception) {          
-            $response = $this->handleException($exception,$request,$response);
-        }
         catch (Throwable $exception) {           
             $response = $this->handleException($exception,$request,$response);
+            if (RouteType::isInstallPage() == true) { 
+                $response = $this->handleRoute($route,$request,$response);
+            } 
         }
 
         return $response;
