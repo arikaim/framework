@@ -70,28 +70,6 @@ class ErrorHandler
     }
 
     /**
-     * Handle route error
-     *
-     * @param ResponseInterface $response
-     * @return ResponseInterface
-     */
-    public function handleRouteError(ResponseInterface $response): ResponseInterface
-    {
-        if (Install::isInstalled() == false) {    
-            if (RouteType::isApiInstallRequest() == true) {
-                return $response;
-            }
-            if (RouteType::isInstallPage() == false) { 
-                // redirect to install page                                
-                return $this->redirectToInstallPage($response);                  
-            }                 
-            return $response;
-        }
-
-        return $response;
-    } 
-
-    /**
      * Render exception
      *
      * @param Throwable $exception
@@ -101,15 +79,12 @@ class ErrorHandler
      */
     public function renderExecption(Throwable $exception, ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {       
-        if (Install::isInstalled() == false) {    
-            if (RouteType::isApiInstallRequest() == true) {
-                return $response;
-            }
-            if (RouteType::isInstallPage() == false) { 
-                // redirect to install page                                
+        $uri = $request->getUri()->getPath();
+        if (Install::isInstalled() == false) {               
+            if (RouteType::isInstallPage() == false && RouteType::isApiInstallRequest($uri) == false) { 
+                // redirect to install page     
                 return $this->redirectToInstallPage($response);                  
-            }                 
-            return $response;
+            }                       
         }
     
         $this->resolveRenderer();
@@ -142,7 +117,7 @@ class ErrorHandler
      * @param ResponseInterface $response
      * @return ResponseInterface
      */
-    protected function redirectToInstallPage(ResponseInterface $response): ResponseInterface
+    public function redirectToInstallPage(ResponseInterface $response): ResponseInterface
     {
         return $response
             ->withoutHeader('Cache-Control')

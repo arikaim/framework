@@ -24,6 +24,7 @@ use Arikaim\Core\Access\AuthFactory;
 use Arikaim\Core\Models\Users;
 use Arikaim\Core\Models\AccessTokens;
 use Arikaim\Core\Routes\RouteType;
+use Arikaim\Core\App\Install;
 use Throwable;
 
 /**
@@ -272,7 +273,12 @@ class Application
                 $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
                 $this->resolveErrorHandler();
             
-                return $this->errorHandler->handleRouteError($response);
+                if (Install::isInstalled() == false) {               
+                    if (RouteType::isInstallPage() == false && RouteType::isApiInstallRequest() == false) { 
+                        // redirect to install page                   
+                        return $this->errorHandler->redirectToInstallPage($response);                  
+                    }                       
+                }               
             }
            
             // get route options
