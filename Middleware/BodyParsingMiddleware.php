@@ -43,7 +43,7 @@ class BodyParsingMiddleware extends Middleware implements MiddlewareInterface
 
         // Add Content-Length header if not already added
         $size = $response->getBody()->getSize();
-        if ($size !== null && $response->hasHeader('Content-Length') == false) {
+        if ($size > 0 && $response->hasHeader('Content-Length') == false) {
             $response = $response->withHeader('Content-Length',(string)$size);
         }
 
