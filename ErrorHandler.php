@@ -121,8 +121,7 @@ class ErrorHandler
     {
         return $response
             ->withoutHeader('Cache-Control')
-            ->withHeader('Cache-Control','no-cache, must-revalidate')
-            ->withHeader('Content-Length','0')    
+            ->withHeader('Cache-Control','no-cache, must-revalidate')  
             ->withHeader('Expires','Sat, 26 Jul 1997 05:00:00 GMT')        
             ->withHeader('Location',RouteType::getInstallPageUrl())
             ->withStatus(307);   
