@@ -375,7 +375,7 @@ class Application
             }
         );
 
-        return $callable($request,$response,$validator,$route);
+        return $callable($request,$response,$validator);
     }
 
     /**
