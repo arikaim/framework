@@ -31,7 +31,9 @@ class ClientIpMiddleware extends Middleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, ResponseInterface $response): array
     {    
         $request = $request->withAttribute('client_ip',ClientIp::getClientIpAddress($request));   
-
+        // referer
+        $request = $request->withAttribute('referer',$_SERVER['HTTP_REFERER'] ?? null);   
+       
         return [$request,$response];
     }   
 }
