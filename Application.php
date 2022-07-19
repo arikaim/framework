@@ -375,7 +375,9 @@ class Application
             }
         );
 
-        return $callable($request,$response,$validator);
+        $response = $callable($request,$response,$validator);
+
+        return ($response instanceof ResponseInterface) ? $response : $callable[0]->getResponse();
     }
 
     /**
