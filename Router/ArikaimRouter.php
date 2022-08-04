@@ -65,10 +65,13 @@ class ArikaimRouter extends Router implements RouterInterface
     {
         $method = $options[0];
         $path = $options[1];
-        
+        $adminPagePath = $options[2] ?? 'admin';
+
         $routePath = \rtrim(\str_replace(BASE_PATH,'',$path),'/');
         // set current path       
-        $type = RouteType::getType($routePath);
+        $type = RouteType::getType($routePath,[
+            'adminPagePath' => $adminPagePath
+        ]);
         
         switch($type) {
             case RouteType::HOME_PAGE_URL: 
@@ -79,7 +82,7 @@ class ArikaimRouter extends Router implements RouterInterface
                 // add admin twig extension                
                 $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);
                 // map control panel page
-                $this->addRoute('GET','/admin[/{language:[a-z]{2}}/]','Arikaim\Core\App\ControlPanel:loadControlPanel'); 
+                $this->addRoute('GET','/' . $adminPagePath . '[/{language:[a-z]{2}}/]','Arikaim\Core\App\ControlPanel:loadControlPanel'); 
                 $this->mapSystemRoutes($method);             
                 break;
             case RouteType::SYSTEM_API_URL: 

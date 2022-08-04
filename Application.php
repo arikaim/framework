@@ -209,9 +209,10 @@ class Application
      * Run application
      *
      * @param ServerRequestInterface|null $request
+     * @param array $options
      * @return void
      */
-    public function run(?ServerRequestInterface $request = null): void
+    public function run(?ServerRequestInterface $request = null, ?array $options = []): void
     {
         // create request
         if ($request == null) {
@@ -220,7 +221,11 @@ class Application
         }
      
         // load routes
-        $this->router->loadRoutes($request->getMethod(),$request->getUri()->getPath());
+        $this->router->loadRoutes(
+            $request->getMethod(),
+            $request->getUri()->getPath(),
+            $options['adminPagePath'] ?? null
+        );
 
         // handle
         $response = $this->handleRequest($request,$this->factory->createResponse(200));
