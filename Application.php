@@ -19,12 +19,7 @@ use Arikaim\Core\Framework\ResponseEmiter;
 use Arikaim\Core\Framework\Router\RouterInterface;
 use Arikaim\Core\Framework\MiddlewareInterface;
 use Arikaim\Core\Validator\Validator;
-use Arikaim\Core\Controllers\ErrorController;
 use Arikaim\Core\Access\AuthFactory;
-use Arikaim\Core\Models\Users;
-use Arikaim\Core\Models\AccessTokens;
-use Arikaim\Core\Routes\RouteType;
-use Arikaim\Core\App\Install;
 use Throwable;
 
 /**
@@ -35,7 +30,7 @@ class Application
     /**
      *  Sefault controller class for page not found error
      */
-    const DEFAULT_PAGE_NOT_FOUND_HANDLER = ErrorController::class . ':showPageNotFound';
+    const DEFAULT_PAGE_NOT_FOUND_HANDLER = '\Arikaim\Core\Controllers\ErrorController:showPageNotFound';
 
     /**
      * Global middlewares
@@ -278,8 +273,11 @@ class Application
                 $route['handler'] = Self::DEFAULT_PAGE_NOT_FOUND_HANDLER;
                 $this->resolveErrorHandler();
             
-                if (Install::isInstalled() == false) {               
-                    if (RouteType::isInstallPage() == false && RouteType::isApiInstallRequest() == false) { 
+                if (\Arikaim\Core\App\Install::isInstalled() == false) {               
+                    if  (
+                        \Arikaim\Core\Routes\RouteType::isInstallPage() == false && 
+                        \Arikaim\Core\Routes\RouteType::isApiInstallRequest() == false
+                        ) { 
                         // redirect to install page                   
                         return $this->errorHandler->redirectToInstallPage($response);                  
                     }                       
@@ -307,7 +305,7 @@ class Application
         } 
         catch (Throwable $exception) {           
             $response = $this->handleException($exception,$request,$response);
-            if (RouteType::isInstallPage() == true) { 
+            if (\Arikaim\Core\Routes\RouteType::isInstallPage() == true) { 
                 $response = $this->handleRoute($route,$request,$response);
             } 
         }
@@ -328,8 +326,8 @@ class Application
       
         if (empty($auth) == false) {
             // auth middleware
-            AuthFactory::setUserProvider('session',new Users());
-            AuthFactory::setUserProvider('token',new AccessTokens());
+            AuthFactory::setUserProvider('session',new \Arikaim\Core\Models\Users());
+            AuthFactory::setUserProvider('token',new \Arikaim\Core\Models\AccessTokens());
             $options['authProviders'] = AuthFactory::createAuthProviders($auth,null);              
         } 
 

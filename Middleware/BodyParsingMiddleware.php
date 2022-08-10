@@ -125,20 +125,7 @@ class BodyParsingMiddleware extends Middleware implements MiddlewareInterface
             return null;
         }
 
-        if (isset($this->parsers[$mediaType]) == true) {
-            $body = (string)$request->getBody();
-            $result = $this->parsers[$mediaType]($body);
-
-            if (\is_null($result) == false && \is_object($result) == false && \is_array($result) == false) {
-                throw new RuntimeException(
-                    'Request body media type parser error.'
-                );
-            }
-
-            return $result;
-        }
-
-        return null;
+        return (isset($this->parsers[$mediaType]) == true) ? $this->parsers[$mediaType]((string)$request->getBody()) : null;
     }
 
     /**
@@ -149,13 +136,8 @@ class BodyParsingMiddleware extends Middleware implements MiddlewareInterface
      */
     protected function getMediaType(ServerRequestInterface $request): ?string
     {
-        $contentType = $request->getHeader('Content-Type')[0] ?? null;
+        $contentType = \trim($request->getHeader('Content-Type')[0] ?? '');
 
-        if (\is_string($contentType) == true && \trim($contentType) != '') {
-            $parts = \explode(';', $contentType);
-            return \strtolower(\trim($parts[0]));
-        }
-
-        return null;
+        return (empty($contentType) == false) ? \strtolower( \trim(\explode(';',$contentType)[0]) ) : null;        
     }
 }
