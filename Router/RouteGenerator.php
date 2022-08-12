@@ -111,7 +111,7 @@ class RouteGenerator
             }
         }
 
-        $this->staticRoutes[$method][$routeStr] =  [
+        $this->staticRoutes[$method][$routeStr] = [
             'id'        => $id,
             'methhod'   => $method,
             'handler'   => $handler,

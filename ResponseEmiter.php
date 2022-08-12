@@ -27,23 +27,11 @@ class ResponseEmiter
         if (\headers_sent() === false) {
             Self::emitHeaders($response);          
         }
+    
         $body = $response->getBody();
-
-        if (Self::isEmpty($response,$body) == false) {
-            Self::emitBody($response,$body);           
-        }
-    }
-
-    /**
-     * Emit body response
-     *
-     * @param ResponseInterface $response
-     * @param object $body
-     * @param integer $maxLength
-     * @return void
-     */
-    private static function emitBody(ResponseInterface $response, $body, int $maxLength = 4096): void
-    {      
+    
+        // emit body
+        $maxLength = 4096;
         if ($body->isSeekable()) {
             $body->rewind();
         }
@@ -60,7 +48,6 @@ class ResponseEmiter
                 echo $data;
 
                 $read -= strlen($data);
-
                 if (\connection_status() !== CONNECTION_NORMAL) {
                     break;
                 }
@@ -70,13 +57,12 @@ class ResponseEmiter
 
         while ($body->eof() == false) {
             echo $body->read($maxLength);
-
             if (\connection_status() !== CONNECTION_NORMAL) {
                 break;
             }
-        }        
-    }    
-    
+        }              
+    }
+
     /**
      * Check if respose body is empty
      *

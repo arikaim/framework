@@ -31,6 +31,10 @@ class Application
      *  Sefault controller class for page not found error
      */
     const DEFAULT_PAGE_NOT_FOUND_HANDLER = '\Arikaim\Core\Controllers\ErrorController:showPageNotFound';
+    /**
+     *  Default error handler class
+     */
+    const DEFUALT_ERROR_HANDLER = '\Arikaim\Core\Framework\ErrorHandler';
 
     /**
      * Global middlewares
@@ -70,7 +74,7 @@ class Application
     /**
      * Error handler class
      *
-     * @var string
+     * @var string|null
      */
     protected $errorHandlerClass;
 
@@ -78,13 +82,13 @@ class Application
      * Constructor
      *
      * @param ContainerInterface $container
-     * @param string $errorHandlerClass
+     * @param string|null $errorHandlerClass
      * @param object|null $factory
      */
     public function __construct(
         ContainerInterface $container, 
         RouterInterface $router,
-        string $errorHandlerClass, 
+        ?string $errorHandlerClass = null, 
         $factory = null
     )
     {        
@@ -134,17 +138,6 @@ class Application
     {
         return $this->container;
     }
-
-    /**
-     * Set error handler class
-     *
-     * @param string $handlerClass
-     * @return void
-     */
-    public function setErrorHandler(string $handlerClass): void
-    {
-        $this->errorHandlerClass = $handlerClass;
-    } 
 
     /**
      * Add route
@@ -244,18 +237,14 @@ class Application
     public function handleRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface 
     {
         try {    
+            // run middlewares
             foreach ($this->middlewares as $item) {
                 $handler = $item['handler'] ?? '';
-            
                 if (empty($handler) == true) {
                     continue;
                 }
-                if (\class_exists($handler) == true) {
-                    $middleware = new $handler($this->container,$item['options'] ?? []);
-                } else {
-                    $middleware = $item['handler'];
-                }
-               
+                $middleware = new $handler($this->container,$item['options'] ?? []);
+
                 if ($middleware instanceof MiddlewareInterface) {
                     // process if is valid middleware instance
                     list($request,$response) = $middleware->process($request,$response);     
@@ -407,6 +396,7 @@ class Application
     private function resolveErrorHandler(): void
     {
         if ($this->errorHandler == null) {
+            $this->errorHandlerClass = $this->errorHandlerClass ?? Self::DEFUALT_ERROR_HANDLER;
             $this->errorHandler = new $this->errorHandlerClass($this->container);
         }
     }

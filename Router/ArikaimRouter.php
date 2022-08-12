@@ -14,11 +14,8 @@ use Psr\Container\ContainerInterface;
 use Arikaim\Core\Framework\Router\RouterInterface;
 use Arikaim\Core\Routes\RouteType;
 use Arikaim\Core\Interfaces\RoutesInterface;
-use Arikaim\Core\App\SystemRoutes;
 use Arikaim\Core\Access\Middleware\AuthMiddleware;
 use Arikaim\Core\Framework\Router\Router;
-use Arikaim\Core\Utils\Uuid;
-
 use Exception;
 
 /**
@@ -101,6 +98,10 @@ class ArikaimRouter extends Router implements RouterInterface
                 $this->mapRoutes($method,RoutesInterface::API);    
                 $this->mapRoutes($method,RoutesInterface::ADMIN_API);    
                 break;
+            case RouteType::INSTALL_PAGE: 
+                // map install page
+                $this->addRoute('GET','/admin/install','Arikaim\Core\App\InstallPage:loadInstall');
+                break;
             case RouteType::UNKNOW_TYPE:                 
                 $this->mapRoutes($method,RoutesInterface::PAGE);
                 break;            
@@ -157,7 +158,7 @@ class ArikaimRouter extends Router implements RouterInterface
      */
     protected function mapSystemRoutes(string $method): void
     {               
-        $routes = SystemRoutes::$routes[$method] ?? [];
+        $routes = \Arikaim\Core\App\SystemRoutes::$routes[$method] ?? [];
            
         foreach ($routes as $item) {          
             $this->addRoute($method,$item['pattern'],$item['handler'],[
@@ -166,7 +167,7 @@ class ArikaimRouter extends Router implements RouterInterface
                 'redirect'             => null,
                 'route_page_name'      => '',
                 'route_extension_name' => ''
-            ],Uuid::create());    
+            ],\Arikaim\Core\Utils\Uuid::create());    
             
             if (empty($item['auth']) == false) {
                 $this->addRouteMiddleware($method,$item['handler'],AuthMiddleware::class);                  
