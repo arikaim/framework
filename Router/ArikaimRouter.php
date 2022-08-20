@@ -100,6 +100,7 @@ class ArikaimRouter extends Router implements RouterInterface
                 break;
             case RouteType::INSTALL_PAGE: 
                 // map install page
+                $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);
                 $this->addRoute('GET','/admin/install','Arikaim\Core\App\InstallPage:loadInstall');
                 break;
             case RouteType::UNKNOW_TYPE:                 
