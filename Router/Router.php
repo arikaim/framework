@@ -51,10 +51,11 @@ class Router implements RouterInterface
      * Constructor
      *  
      * @param string $basePath    
+     * @param CacheInterface $cache
      */
-    public function __construct(string $basePath)
+    public function __construct(string $basePath, object $cache)
     {        
-        $this->generator = new RouteGenerator(new RouteParser());    
+        $this->generator = new RouteGenerator(new RouteParser(),$cache);    
         $this->basePath = $basePath;
         $this->routeMiddlewares = [];
         $this->routeOptions = [];        
@@ -104,7 +105,7 @@ class Router implements RouterInterface
      */
     public function dispatch(string $method, string $uri): array
     {
-        list($staticRoutes,$variableRoutes) = $this->generator->getData();
+        list($staticRoutes,$variableRoutes) = $this->generator->getData($method);
 
         if (isset($staticRoutes[$method][$uri]) == true) {         
             $route = $staticRoutes[$method][$uri];             

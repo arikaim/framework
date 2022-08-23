@@ -43,13 +43,14 @@ class ArikaimRouter extends Router implements RouterInterface
      * @param ContainerInterface $container
      * @param string $basePath
      * @param object|null $routeLoader
+     * @param CacheInterface|null $cache
      */
-    public function __construct(ContainerInterface $container, string $basePath, $routeLoader = null)
+    public function __construct(ContainerInterface $container, string $basePath, $routeLoader = null, ?object $cache = null)
     {        
-        parent::__construct($basePath);
+        parent::__construct($basePath,$cache ?? $container->get('cache'));
        
         $this->container = $container;
-        $this->routeLoader = ($routeLoader == null) ? $container->get('routes') : $routeLoader;
+        $this->routeLoader = ($routeLoader == null) ? $container->get('routes') : $routeLoader;      
     }
 
     /**

@@ -17,9 +17,9 @@ class RouteGenerator
      * @var array
      */
     protected $staticRoutes = [];
- 
+    
     /**
-     * Variable routes map
+     * Routes map
      *
      * @var array
      */
@@ -33,13 +33,22 @@ class RouteGenerator
     protected $routeParser;
 
     /**
+     * Cache ref
+     *
+     * @var CacheInterface
+     */
+    protected $cache;
+
+    /**
      * Constructor
      *
      * @param RouteParser $routeParser
+     * @param CacheInterface $cache
      */
-    public function __construct(RouteParser $routeParser)
+    public function __construct(RouteParser $routeParser, object $cache)
     {
         $this->routeParser = $routeParser;      
+        $this->cache = $cache;
     }
 
     /**
@@ -67,10 +76,17 @@ class RouteGenerator
     /**
      * Get routes data
      *
+     * @param string $method
      * @return array
      */
-    public function getData(): array
+    public function getData(string $method): array
     {
+        $variableRoutes = $this->cache->fetch('variable.routes.' . $method);
+        if ($variableRoutes !== false) {           
+            return [$this->staticRoutes,$variableRoutes];
+        }
+
+        // process variable routes
         $variableRoutes = [];
         foreach ($this->routesMap as $method => $regexToRoutesMap) {
             $count = \count($regexToRoutesMap);
@@ -81,6 +97,9 @@ class RouteGenerator
             $variableRoutes[$method] = \array_map([$this,'processChunk'],$chunks);
         }
 
+        // save var routes to cache
+        $this->cache->save('variable.routes.' . $method,$variableRoutes); 
+       
         return [$this->staticRoutes,$variableRoutes];
     }
     
@@ -200,10 +219,8 @@ class RouteGenerator
             ++$numGroups;
         }
 
-        $regex = '~^(?|' . \implode('|', $regexes) . ')$~';
-
         return [
-            'regex'    => $regex, 
+            'regex'    => '~^(?|' . \implode('|', $regexes) . ')$~', 
             'routeMap' => $routeMap
         ];
     }
