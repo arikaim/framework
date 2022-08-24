@@ -38,6 +38,13 @@ class ArikaimRouter extends Router implements RouterInterface
     protected $routeLoader;
 
     /**
+     * Cache
+     *
+     * @var null|object
+     */
+    protected $cache;
+
+    /**
      * Constructor
      *
      * @param ContainerInterface $container
@@ -47,10 +54,11 @@ class ArikaimRouter extends Router implements RouterInterface
      */
     public function __construct(ContainerInterface $container, string $basePath, $routeLoader = null, ?object $cache = null)
     {        
-        parent::__construct($basePath,$cache ?? $container->get('cache'));
+        $this->cache = $cache ?? $container->get('cache');
+        parent::__construct($basePath,$this->cache);
        
         $this->container = $container;
-        $this->routeLoader = ($routeLoader == null) ? $container->get('routes') : $routeLoader;      
+        $this->routeLoader = $routeLoader ?? $container->get('routes.storage');
     }
 
     /**
@@ -111,6 +119,25 @@ class ArikaimRouter extends Router implements RouterInterface
     }
 
     /**
+     * Get routes list for request method
+     *
+     * @param string $method
+     * @param int|null $type
+     * @return array
+     */
+    public function readRoutes(string $method, $type = null): array
+    {
+        $cacheItemkey = 'routes.list.' . $method . '.' . ($type ?? 'all');
+        $routes = $this->cache->fetch($cacheItemkey);  
+        if ($routes === false) {
+            $routes = $this->routeLoader->searchRoutes($method,$type);
+            $this->cache->save($cacheItemkey,$routes);   
+        }
+        
+        return $routes;
+    }
+
+    /**
      * Map extensons and templates routes
      *     
      * @param string $method
@@ -122,7 +149,7 @@ class ArikaimRouter extends Router implements RouterInterface
     public function mapRoutes(string $method, ?int $type = null): bool
     {      
         try {   
-            $routes = ($type == RoutesInterface::HOME_PAGE) ? $this->routeLoader->getHomePageRoute() : $this->routeLoader->searchRoutes($method,$type);                           
+            $routes = ($type == RoutesInterface::HOME_PAGE) ? $this->routeLoader->getHomePageRoute() : $this->readRoutes($method,$type);                           
         } catch(Exception $e) {
             return false;
         }

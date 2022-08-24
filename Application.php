@@ -221,7 +221,6 @@ class Application
         try {
             // emit        
             ResponseEmiter::emit($response);
-
         } catch (Throwable $exception) {           
             $response = $this->handleException($exception,$request,$response);
             ResponseEmiter::emit($response);
