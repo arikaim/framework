@@ -17,7 +17,6 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 
 use Arikaim\Core\Framework\ResponseEmiter;
 use Arikaim\Core\Framework\Router\RouterInterface;
-use Arikaim\Core\Framework\MiddlewareInterface;
 use Arikaim\Core\Validator\Validator;
 use Arikaim\Core\Access\AuthFactory;
 use Throwable;
@@ -243,11 +242,8 @@ class Application
                     continue;
                 }
                 $middleware = new $handler($this->container,$item['options'] ?? []);
-
-                if ($middleware instanceof MiddlewareInterface) {
-                    // process if is valid middleware instance
-                    list($request,$response) = $middleware->process($request,$response);     
-                }                   
+                // process if is valid middleware instance
+                list($request,$response) = $middleware->process($request,$response);                 
             }
 
             // dispatch routes
@@ -280,7 +276,7 @@ class Application
             foreach ($middlewares as $middlewareClass) {
                 $middleware = (\is_string($middlewareClass) == true) ? $this->resolveRouteMiddleware($middlewareClass,$routeOptions) : $middlewareClass;
                                
-                if ($middleware instanceof MiddlewareInterface) {
+                if ($middleware !== null) {
                     list($request,$response) = $middleware->process($request,$response);       
                 }                
             }
@@ -306,9 +302,9 @@ class Application
      *
      * @param string $middlewareClass
      * @param array $options
-     * @return MiddlewareInterface|null  
+     * @return Arikaim\Core\Framework\MiddlewareInterface|null  
      */
-    protected function resolveRouteMiddleware(string $middlewareClass, array $options): ?MiddlewareInterface
+    protected function resolveRouteMiddleware(string $middlewareClass, array $options): ?object
     {
         $auth = $options['auth'] ?? null;
       
