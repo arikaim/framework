@@ -65,9 +65,9 @@ class ArikaimRouter extends Router implements RouterInterface
      * Load routes
      *
      * @param mixed $options  
-     * @return void
+     * @return int
      */
-    public function loadRoutes(...$options): void
+    public function loadRoutes(...$options): int
     {
         $method = $options[0];
         $path = $options[1];
@@ -116,6 +116,8 @@ class ArikaimRouter extends Router implements RouterInterface
                 $this->mapRoutes($method,RoutesInterface::PAGE,$type);
                 break;            
         }
+
+        return $type;
     }
 
     /**

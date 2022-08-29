@@ -77,11 +77,13 @@ class RouteGenerator
      * Get routes data
      *
      * @param string $method
+     * @param int $rouetType
      * @return array
      */
-    public function getData(string $method): array
+    public function getData(string $method, int $rouetType): array
     {
-        $variableRoutes = $this->cache->fetch('variable.routes.' . $method);
+        $cacheKey = 'variable.routes.' . $method . '.' . (string)$rouetType;
+        $variableRoutes = $this->cache->fetch($cacheKey);
         if ($variableRoutes !== false) {           
             return [$this->staticRoutes,$variableRoutes];
         }
@@ -98,7 +100,7 @@ class RouteGenerator
         }
 
         // save var routes to cache
-        $this->cache->save('variable.routes.' . $method,$variableRoutes); 
+        $this->cache->save($cacheKey,$variableRoutes); 
        
         return [$this->staticRoutes,$variableRoutes];
     }

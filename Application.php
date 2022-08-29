@@ -208,14 +208,14 @@ class Application
         }
      
         // load routes
-        $this->router->loadRoutes(
+        $routeType = $this->router->loadRoutes(
             $request->getMethod(),
             $request->getUri()->getPath(),
             $options['adminPagePath'] ?? null
         );
 
         // handle
-        $response = $this->handleRequest($request,$this->factory->createResponse(200));
+        $response = $this->handleRequest($request,$this->factory->createResponse(200),$routeType);
 
         try {
             // emit        
@@ -232,7 +232,7 @@ class Application
      * @param ServerRequestInterface $request
      * @return ResponseInterface   
      */
-    public function handleRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface 
+    public function handleRequest(ServerRequestInterface $request, ResponseInterface $response, int $routeType): ResponseInterface 
     {
         try {    
             // run middlewares
@@ -250,7 +250,7 @@ class Application
             $uri = $request->getUri()->getPath();
             $method = $request->getMethod();
         
-            list($status,$route) = $this->router->dispatch($method,$uri);
+            list($status,$route) = $this->router->dispatch($method,$uri,$routeType);
           
             if ($status != RouterInterface::ROUTE_FOUND) {
                 // route error

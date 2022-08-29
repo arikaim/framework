@@ -53,18 +53,19 @@ interface RouterInterface
      *
      * @param mixed $options
   
-     * @return void
+     * @return int (route type)
      */
-    public function loadRoutes(...$options): void;
+    public function loadRoutes(...$options): int;
 
     /**
      * Dispatch route
      *
      * @param string $method
      * @param string $uri
+     * @param int $routeType
      * @return array
      */
-    public function dispatch(string $method, string $uri): array;
+    public function dispatch(string $method, string $uri, int $routeType): array;
 
     /**
      * Add route middleware

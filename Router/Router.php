@@ -101,11 +101,12 @@ class Router implements RouterInterface
      *
      * @param string $method
      * @param string $uri
+     * @param int $routeType
      * @return array
      */
-    public function dispatch(string $method, string $uri): array
+    public function dispatch(string $method, string $uri, int $routeType): array
     {
-        list($staticRoutes,$variableRoutes) = $this->generator->getData($method);
+        list($staticRoutes,$variableRoutes) = $this->generator->getData($method,$routeType);
 
         if (isset($staticRoutes[$method][$uri]) == true) {         
             $route = $staticRoutes[$method][$uri];             
@@ -161,10 +162,11 @@ class Router implements RouterInterface
      * Load routes
      *
      * @param mixed $options  
-     * @return void
+     * @return int
      */
-    public function loadRoutes(...$options): void
+    public function loadRoutes(...$options): int
     {       
+        return 0;
     }
 
     /**
