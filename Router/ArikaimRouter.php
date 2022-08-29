@@ -82,7 +82,7 @@ class ArikaimRouter extends Router implements RouterInterface
         switch($type) {
             case RouteType::HOME_PAGE_URL: 
                 // home page route                 
-                $this->mapRoutes($method,RoutesInterface::HOME_PAGE);
+                $this->mapRoutes($method,RoutesInterface::HOME_PAGE,$type);
                 break;
             case RouteType::ADMIN_PAGE_URL: 
                 // add admin twig extension                
@@ -98,14 +98,14 @@ class ArikaimRouter extends Router implements RouterInterface
                 break;
             case RouteType::API_URL: 
                 // api routes only 
-                $this->mapRoutes($method,RoutesInterface::API);    
+                $this->mapRoutes($method,RoutesInterface::API,$type);    
                 break;
             case RouteType::ADMIN_API_URL:                
                 // add admin twig extension
                 $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);
                 // map admin api routes
-                $this->mapRoutes($method,RoutesInterface::API);    
-                $this->mapRoutes($method,RoutesInterface::ADMIN_API);    
+                $this->mapRoutes($method,RoutesInterface::API,$type);    
+                $this->mapRoutes($method,RoutesInterface::ADMIN_API,$type);    
                 break;
             case RouteType::INSTALL_PAGE: 
                 // map install page
@@ -113,7 +113,7 @@ class ArikaimRouter extends Router implements RouterInterface
                 $this->addRoute('GET','/admin/install','Arikaim\Core\App\InstallPage:loadInstall');
                 break;
             case RouteType::UNKNOW_TYPE:                 
-                $this->mapRoutes($method,RoutesInterface::PAGE);
+                $this->mapRoutes($method,RoutesInterface::PAGE,$type);
                 break;            
         }
     }
