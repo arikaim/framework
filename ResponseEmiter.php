@@ -84,28 +84,5 @@ class ResponseEmiter
         return $body->eof();
     }
 
-    /**
-     * Emit headers
-     *
-     * @param ResponseInterface $response
-     * @return void
-     */
-    private static function emitHeaders(ResponseInterface $response): void
-    {
-        foreach ($response->getHeaders() as $name => $values) {
-            $first = \strtolower($name) !== 'set-cookie';
-            foreach ($values as $value) {              
-                header(\sprintf('%s: %s',$name,$value), $first);
-                $first = false;
-            }
-        }
-
-        // emit status line
-        \header(\sprintf(
-            'HTTP/%s %s %s',
-            $response->getProtocolVersion(),
-            $response->getStatusCode(),
-            $response->getReasonPhrase()
-        ),true,$response->getStatusCode());
-    } 
+    
 }

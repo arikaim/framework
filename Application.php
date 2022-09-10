@@ -15,7 +15,6 @@ use Psr\Http\Message\ResponseInterface;
 use Nyholm\Psr7Server\ServerRequestCreator;
 use Nyholm\Psr7\Factory\Psr17Factory;
 
-use Arikaim\Core\Framework\ResponseEmiter;
 use Arikaim\Core\Framework\Router\RouterInterface;
 use Arikaim\Core\Validator\Validator;
 use Arikaim\Core\Access\AuthFactory;
@@ -219,10 +218,10 @@ class Application
 
         try {
             // emit        
-            ResponseEmiter::emit($response);
+            Self::emit($response);
         } catch (Throwable $exception) {           
             $response = $this->handleException($exception,$request,$response);
-            ResponseEmiter::emit($response);
+            Self::emit($response);
         }
     }
 
@@ -395,4 +394,76 @@ class Application
             $this->errorHandler = new $this->errorHandlerClass($this->container);
         }
     }
+
+    /**
+     * Emit response
+     *
+     * @param ResponseInterface $response
+     * @return void
+     */
+    public static function emit(ResponseInterface $response): void
+    {
+        if (\headers_sent() === false) {
+            Self::emitHeaders($response);          
+        }
+    
+        $body = $response->getBody();
+    
+        // emit body
+        $maxLength = 4096;
+        if ($body->isSeekable()) {
+            $body->rewind();
+        }
+
+        $read = (int)$response->getHeaderLine('Content-Length');
+        if ($read == false) {
+            $read = $body->getSize();
+        }
+
+        if ($read == true) {
+            while ($read > 0 && $body->eof() == false) {
+                $length = \min($maxLength,$read);
+                $data = $body->read($length);
+                echo $data;
+
+                $read -= strlen($data);
+                if (\connection_status() !== CONNECTION_NORMAL) {
+                    break;
+                }
+            }
+            return;
+        } 
+
+        while ($body->eof() == false) {
+            echo $body->read($maxLength);
+            if (\connection_status() !== CONNECTION_NORMAL) {
+                break;
+            }
+        }              
+    }
+
+    /**
+     * Emit headers
+     *
+     * @param ResponseInterface $response
+     * @return void
+     */
+    private static function emitHeaders(ResponseInterface $response): void
+    {
+        foreach ($response->getHeaders() as $name => $values) {
+            $first = \strtolower($name) !== 'set-cookie';
+            foreach ($values as $value) {              
+                header(\sprintf('%s: %s',$name,$value), $first);
+                $first = false;
+            }
+        }
+
+        // emit status line
+        \header(\sprintf(
+            'HTTP/%s %s %s',
+            $response->getProtocolVersion(),
+            $response->getStatusCode(),
+            $response->getReasonPhrase()
+        ),true,$response->getStatusCode());
+    } 
 }
