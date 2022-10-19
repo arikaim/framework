@@ -17,6 +17,31 @@ use Psr\Http\Message\ResponseInterface;
 class ResponseEmiter
 {
     /**
+     * Emit headers
+     *
+     * @param ResponseInterface $response
+     * @return void
+     */
+    public static function emitHeaders(ResponseInterface $response): void
+    {
+        foreach ($response->getHeaders() as $name => $values) {
+            $first = \strtolower($name) !== 'set-cookie';
+            foreach ($values as $value) {              
+                header(\sprintf('%s: %s',$name,$value), $first);
+                $first = false;
+            }
+        }
+
+        // emit status line
+        \header(\sprintf(
+            'HTTP/%s %s %s',
+            $response->getProtocolVersion(),
+            $response->getStatusCode(),
+            $response->getReasonPhrase()
+        ),true,$response->getStatusCode());
+    } 
+
+    /**
      * Emit response
      *
      * @param ResponseInterface $response
@@ -70,7 +95,7 @@ class ResponseEmiter
      * @param object $body
      * @return boolean
      */
-    private static function isEmpty(ResponseInterface $response, $body): bool
+    public static function isEmpty(ResponseInterface $response, $body): bool
     {
         if (\in_array($response->getStatusCode(),[204,205,304],true)) {
             return true;
@@ -83,6 +108,4 @@ class ResponseEmiter
 
         return $body->eof();
     }
-
-    
 }
