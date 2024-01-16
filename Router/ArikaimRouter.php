@@ -85,7 +85,7 @@ class ArikaimRouter extends Router implements RouterInterface
             $this->routeOptions = $routeOptions;
         }
         
-        $routeMiddlewares = $this->cache->fetch('route.middlewares.' . $method);
+        $routeMiddlewares = $this->cache->fetch('route.middlewares.' . $cacheKey);
         if ($routeMiddlewares !== false) {
             $this->routeMiddlewares[$method] = $routeMiddlewares;
         }
@@ -141,7 +141,7 @@ class ArikaimRouter extends Router implements RouterInterface
                 break;
             case RouteType::API_URL: 
                 // api routes only 
-                $this->mapRoutes($method,$type);    
+                $this->mapRoutes($method,2);    
                 break;
             case RouteType::ADMIN_API_URL:                
                 // map admin api routes
