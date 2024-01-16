@@ -77,17 +77,11 @@ class RouteGenerator
      * Get routes data
      *
      * @param string $method
-     * @param int $rouetType
+     * @param int $routeType
      * @return array
      */
-    public function getData(string $method, int $rouetType): array
+    public function getData(string $method): array
     {
-        $cacheKey = 'variable.routes.' . $method . '.' . (string)$rouetType;
-        $variableRoutes = $this->cache->fetch($cacheKey);
-        if ($variableRoutes !== false) {           
-            return [$this->staticRoutes,$variableRoutes];
-        }
-
         // process variable routes
         $variableRoutes = [];
         foreach ($this->routesMap as $method => $regexToRoutesMap) {
@@ -98,10 +92,7 @@ class RouteGenerator
             $chunks = \array_chunk($regexToRoutesMap,$chunkSize,true);
             $variableRoutes[$method] = \array_map([$this,'processChunk'],$chunks);
         }
-
-        // save var routes to cache
-        $this->cache->save($cacheKey,$variableRoutes); 
-       
+ 
         return [$this->staticRoutes,$variableRoutes];
     }
     

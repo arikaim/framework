@@ -62,10 +62,11 @@ interface RouterInterface
      *
      * @param string $method
      * @param string $uri
-     * @param int $routeType
+     * @param array $staticRoutes
+     * @param array $variableRoutes
      * @return array
      */
-    public function dispatch(string $method, string $uri, int $routeType): array;
+    public function dispatch(string $method, string $uri, array $staticRoutes, array $variableRoutes): array;
 
     /**
      * Add route middleware

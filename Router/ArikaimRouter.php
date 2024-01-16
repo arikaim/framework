@@ -62,6 +62,59 @@ class ArikaimRouter extends Router implements RouterInterface
     }
 
     /**
+     * Dispatch route
+     *
+     * @param string $method
+     * @param string $path
+     * @param string|null $adminPagePath
+     * @return array
+     */
+    public function dispatchRoute(string $method, string $path, ?string $adminPagePath = null): array
+    {       
+        $routeType = RouteType::getType($path,[
+            'adminPagePath' => $adminPagePath
+        ]);
+    
+        $cacheKey = $method . '.' . (string)$routeType;
+
+        $variableRoutes = $this->cache->fetch('variable.routes.' . $cacheKey);
+        $staticRoutes = $this->cache->fetch('static.routes.' . $cacheKey);
+        
+        $routeOptions = $this->cache->fetch('route.options.' . $cacheKey);
+        if ($routeOptions !== false) {
+            $this->routeOptions = $routeOptions;
+        }
+        
+        $routeMiddlewares = $this->cache->fetch('route.middlewares.' . $method);
+        if ($routeMiddlewares !== false) {
+            $this->routeMiddlewares[$method] = $routeMiddlewares;
+        }
+
+        if ($variableRoutes === false || $staticRoutes === false) {   
+            // map routes
+            $this->loadRoutes($method,$routeType,$adminPagePath ?? 'admin');
+            list($staticRoutes,$variableRoutes) = $this->generator->getData($method);
+
+            // save routes to cache
+            $this->cache->save('variable.routes.' . $cacheKey,$variableRoutes); 
+            $this->cache->save('static.routes.' . $cacheKey,$staticRoutes); 
+            $this->cache->save('route.options.' . $cacheKey,$this->routeOptions);
+            $this->cache->save('route.middlewares.' . $cacheKey,$this->getMiddlewares($method));
+        }        
+
+        // add admin twig extension                
+        if ($routeType == RouteType::ADMIN_PAGE_URL ||
+            RouteType::SYSTEM_API_URL ||
+            RouteType::ADMIN_API_URL  ||
+            RouteType::INSTALL_PAGE
+        ) {
+            $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);
+        }
+
+        return $this->dispatch($method,$path,$staticRoutes,$variableRoutes);
+    }
+
+    /**
      * Load routes
      *
      * @param mixed $options  
@@ -70,50 +123,36 @@ class ArikaimRouter extends Router implements RouterInterface
     public function loadRoutes(...$options): int
     {
         $method = $options[0];
-        $path = $options[1];
+        $type = $options[1];
         $adminPagePath = $options[2] ?? 'admin';
 
-        $routePath = \rtrim(\str_replace(BASE_PATH,'',$path),'/');
-        // set current path       
-        $type = RouteType::getType($routePath,[
-            'adminPagePath' => $adminPagePath
-        ]);
-        
         switch($type) {
             case RouteType::HOME_PAGE_URL: 
                 // home page route                 
-                $this->mapRoutes($method,RoutesInterface::HOME_PAGE,$type);
+                $this->mapRoutes($method,3);
                 break;
             case RouteType::ADMIN_PAGE_URL: 
-                // add admin twig extension                
-                $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);
                 // map control panel page
                 $this->addRoute('GET','/' . $adminPagePath . '[/{language:[a-z]{2}}/]','Arikaim\Core\App\ControlPanel:loadControlPanel'); 
                 $this->mapSystemRoutes($method);             
                 break;
-            case RouteType::SYSTEM_API_URL: 
-                // add admin twig extension
-                $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);                 
+            case RouteType::SYSTEM_API_URL:              
                 $this->mapSystemRoutes($method);      
                 break;
             case RouteType::API_URL: 
                 // api routes only 
-                $this->mapRoutes($method,RoutesInterface::API,$type);    
+                $this->mapRoutes($method,$type);    
                 break;
             case RouteType::ADMIN_API_URL:                
-                // add admin twig extension
-                $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);
                 // map admin api routes
-                $this->mapRoutes($method,RoutesInterface::API,$type);    
-                $this->mapRoutes($method,RoutesInterface::ADMIN_API,$type);    
+                $this->mapRoutes($method,$type);    
+                $this->mapSystemRoutes($method);  
                 break;
             case RouteType::INSTALL_PAGE: 
-                // map install page
-                $this->container->get('view')->addExtension(new \Arikaim\Core\App\AdminTwigExtension);
                 $this->addRoute('GET','/admin/install','Arikaim\Core\App\InstallPage:loadInstall');
                 break;
             case RouteType::UNKNOW_TYPE:                 
-                $this->mapRoutes($method,RoutesInterface::PAGE,$type);
+                $this->mapRoutes($method,$type);
                 break;            
         }
 
@@ -127,9 +166,9 @@ class ArikaimRouter extends Router implements RouterInterface
      * @param int|null $type
      * @return array
      */
-    public function readRoutes(string $method, $type = null): array
+    public function readRoutes(string $method, ?int $type = null): array
     {
-        $cacheItemkey = 'routes.list.' . $method . '.' . ($type ?? 'all');
+        $cacheItemkey = 'routes.list.' . $method . '.' . ((string)$type ?? 'all');
         $routes = $this->cache->fetch($cacheItemkey);  
         if ($routes === false) {
             $routes = $this->routeLoader->searchRoutes($method,$type);
@@ -151,7 +190,7 @@ class ArikaimRouter extends Router implements RouterInterface
     public function mapRoutes(string $method, ?int $type = null): bool
     {      
         try {   
-            $routes = ($type == RoutesInterface::HOME_PAGE) ? $this->routeLoader->getHomePageRoute() : $this->readRoutes($method,$type);                           
+            $routes = $this->readRoutes($method,$type);                           
         } catch(Exception $e) {
             return false;
         }

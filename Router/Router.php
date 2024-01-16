@@ -74,6 +74,17 @@ class Router implements RouterInterface
     }
 
     /**
+     * Get middlewares per method
+     *
+     * @param string $method
+     * @return array
+     */
+    public function getMiddlewares(string $method): array
+    {
+        return $this->routeMiddlewares[$method] ?? [];
+    }
+
+    /**
      * Add route middleware
      *
      * @param string $method
@@ -101,17 +112,16 @@ class Router implements RouterInterface
      *
      * @param string $method
      * @param string $uri
-     * @param int $routeType
+     * @param array $staticRoutes
+     * @param array $variableRoutes
      * @return array
      */
-    public function dispatch(string $method, string $uri, int $routeType): array
-    {
-        list($staticRoutes,$variableRoutes) = $this->generator->getData($method,$routeType);
-
-        if (isset($staticRoutes[$method][$uri]) == true) {         
-            $route = $staticRoutes[$method][$uri];             
+    public function dispatch(string $method, string $uri, array $staticRoutes, array $variableRoutes): array
+    {       
+        if (isset($staticRoutes[$method][$uri]) == true) {  
+            $route = $staticRoutes[$method][$uri];        
         } elseif (isset($variableRoutes[$method]) == true) {
-            $route = $this->dispatchVariableRoute($variableRoutes[$method],$uri);            
+            $route = $this->dispatchVariableRoute($variableRoutes[$method],$uri);               
         }
 
         return [
@@ -138,7 +148,7 @@ class Router implements RouterInterface
      */
     public function addRoute(string $method, string $pattern, string $handlerClass, array $options = [], $routeId = null): void
     {      
-        $this->generator->addRoute($method,$this->basePath . $pattern,$handlerClass,$routeId);
+        $this->generator->addRoute($method,$pattern,$handlerClass,$routeId);
                
         if (empty($routeId) == false) {
             $options['id'] = $routeId;
