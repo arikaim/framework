@@ -2,8 +2,6 @@
 
 namespace Arikaim\Core\Framework\Router;
 
-use FastRoute\RouteParser;
-
 use Exception;
 
 /**
@@ -33,22 +31,13 @@ class RouteGenerator
     protected $routeParser;
 
     /**
-     * Cache ref
-     *
-     * @var CacheInterface
-     */
-    protected $cache;
-
-    /**
      * Constructor
      *
      * @param RouteParser $routeParser
-     * @param CacheInterface $cache
      */
-    public function __construct(RouteParser $routeParser, object $cache)
+    public function __construct(object $routeParser)
     {
         $this->routeParser = $routeParser;      
-        $this->cache = $cache;
     }
 
     /**

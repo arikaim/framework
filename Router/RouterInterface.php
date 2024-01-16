@@ -73,8 +73,8 @@ interface RouterInterface
      *
      * @param string $method
      * @param string $handlerClass
-     * @param string|object $middleware
+     * @param string $middleware
      * @return void
      */
-    public function addRouteMiddleware(string $method, string $handlerClass, $middleware): void;
+    public function addRouteMiddleware(string $method, string $handlerClass, string $middleware): void;
 }

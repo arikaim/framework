@@ -13,7 +13,6 @@ use Psr\Container\ContainerInterface;
 
 use Arikaim\Core\Framework\Router\RouterInterface;
 use Arikaim\Core\Routes\RouteType;
-use Arikaim\Core\Interfaces\RoutesInterface;
 use Arikaim\Core\Access\Middleware\AuthMiddleware;
 use Arikaim\Core\Framework\Router\Router;
 use Exception;
@@ -48,15 +47,14 @@ class ArikaimRouter extends Router implements RouterInterface
      * Constructor
      *
      * @param ContainerInterface $container
-     * @param string $basePath
      * @param object|null $routeLoader
      * @param CacheInterface|null $cache
      */
-    public function __construct(ContainerInterface $container, string $basePath, $routeLoader = null, ?object $cache = null)
+    public function __construct(ContainerInterface $container, $routeLoader = null, ?object $cache = null)
     {        
-        $this->cache = $cache ?? $container->get('cache');
-        parent::__construct($basePath,$this->cache);
-       
+        parent::__construct();
+
+        $this->cache = $cache ?? $container->get('cache');  
         $this->container = $container;
         $this->routeLoader = $routeLoader ?? $container->get('routes.storage');
     }
@@ -72,7 +70,7 @@ class ArikaimRouter extends Router implements RouterInterface
     public function dispatchRoute(string $method, string $path, ?string $adminPagePath = null): array
     {       
         $routeType = RouteType::getType($path,[
-            'adminPagePath' => $adminPagePath
+            'adminPagePath' => $adminPagePath ?? 'admin'
         ]);
     
         $cacheKey = $method . '.' . (string)$routeType;
@@ -92,7 +90,7 @@ class ArikaimRouter extends Router implements RouterInterface
 
         if ($variableRoutes === false || $staticRoutes === false) {   
             // map routes
-            $this->loadRoutes($method,$routeType,$adminPagePath ?? 'admin');
+            $this->loadRoutes($method,$routeType,$adminPagePath);
             list($staticRoutes,$variableRoutes) = $this->generator->getData($method);
 
             // save routes to cache
@@ -145,7 +143,7 @@ class ArikaimRouter extends Router implements RouterInterface
                 break;
             case RouteType::ADMIN_API_URL:                
                 // map admin api routes
-                $this->mapRoutes($method,$type);    
+                $this->mapRoutes($method,4);    
                 $this->mapSystemRoutes($method);  
                 break;
             case RouteType::INSTALL_PAGE: 
@@ -210,7 +208,8 @@ class ArikaimRouter extends Router implements RouterInterface
                 $this->addRouteMiddleware($method,$handler,AuthMiddleware::class);              
             } 
     
-            $middlewares = (\is_string($item['middlewares']) == true) ? \json_decode($item['middlewares'],true) : $item['middlewares'] ?? [];
+            $middlewares = $item['middleware'] ?? [];
+            
             // add middlewares                        
             foreach ($middlewares as $class) {            
                $this->addRouteMiddleware($method,$handler,$class);                               

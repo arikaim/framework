@@ -16,6 +16,7 @@ use Nyholm\Psr7Server\ServerRequestCreator;
 use Nyholm\Psr7\Factory\Psr17Factory;
 
 use Arikaim\Core\Framework\Router\RouterInterface;
+use Arikaim\Core\Framework\Middleware\BodyParsingMiddleware;
 use Arikaim\Core\Validator\Validator;
 use Arikaim\Core\Access\AuthFactory;
 use Throwable;
@@ -179,6 +180,17 @@ class Application
     } 
 
     /**
+     * Set middlewares
+     *
+     * @param array $middlewares
+     * @return void
+     */
+    public function setMiddlewares(array $middlewares): void
+    {
+        $this->middlewares = $middlewares;
+    }
+
+    /**
      * Add route middleware
      *
      * @param string $httpMethod
@@ -207,7 +219,7 @@ class Application
         }
      
         // handle
-        $response = $this->handleRequest($request,$this->factory->createResponse(200));
+        $response = $this->handleRequest($request,$this->factory->createResponse(200),$options);
 
         try {
             // emit        
@@ -222,11 +234,23 @@ class Application
      * Handle http request
      *
      * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array|null $options
      * @return ResponseInterface   
      */
-    public function handleRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface 
+    public function handleRequest(ServerRequestInterface $request, ResponseInterface $response, ?array $options = []): ResponseInterface 
     {
         try {    
+            $path = $request->getUri()->getPath();
+            $path = \str_replace(BASE_PATH,'',$path);
+            
+            $method = $request->getMethod();
+
+            // add core middlewares
+            if ($method != 'GET') {
+                $this->addMiddleware(BodyParsingMiddleware::class);           
+            }
+            
             // run middlewares
             foreach ($this->middlewares as $item) {
                 $handler = $item['handler'] ?? '';
@@ -239,12 +263,7 @@ class Application
             }
 
             // dispatch routes
-            $path = $request->getUri()->getPath();
-            $path = \str_replace(BASE_PATH,'',$path);
-            
-            $method = $request->getMethod();
-        
-            list($status,$route) = $this->router->dispatchRoute($method,$path);
+            list($status,$route) = $this->router->dispatchRoute($method,$path,$options['adminPagePath'] ?? null);
           
             if ($status != RouterInterface::ROUTE_FOUND) {
                 // route error
@@ -268,11 +287,8 @@ class Application
             // run route middlewares
             $middlewares = $this->router->getRouteMiddlewares($method,$route['handler']);          
             foreach ($middlewares as $middlewareClass) {
-                $middleware = (\is_string($middlewareClass) == true) ? $this->resolveRouteMiddleware($middlewareClass,$routeOptions) : $middlewareClass;
-                               
-                if ($middleware !== null) {
-                    list($request,$response) = $middleware->process($request,$response);       
-                }                
+                $middleware = $this->resolveRouteMiddleware($middlewareClass,$routeOptions);
+                list($request,$response) = $middleware->process($request,$response);           
             }
 
             // add route options
@@ -296,20 +312,18 @@ class Application
      *
      * @param string $middlewareClass
      * @param array $options
-     * @return Arikaim\Core\Framework\MiddlewareInterface|null  
+     * @return Arikaim\Core\Framework\MiddlewareInterface  
      */
-    protected function resolveRouteMiddleware(string $middlewareClass, array $options): ?object
+    protected function resolveRouteMiddleware(string $middlewareClass, array $options): object
     {
         $auth = $options['auth'] ?? null;
       
         if (empty($auth) == false) {
             // auth middleware
-            AuthFactory::setUserProvider('session',new \Arikaim\Core\Models\Users());
-            AuthFactory::setUserProvider('token',new \Arikaim\Core\Models\AccessTokens());
-            $options['authProviders'] = AuthFactory::createAuthProviders($auth,null);              
+            $options['authProviders'] = AuthFactory::createAuthProviders($auth);              
         } 
 
-        return (\class_exists($middlewareClass) == true) ? new $middlewareClass($this->container,$options) : null;
+        return new $middlewareClass($this->container,$options);
     }
 
     /**

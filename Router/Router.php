@@ -50,13 +50,10 @@ class Router implements RouterInterface
     /**
      * Constructor
      *  
-     * @param string $basePath    
-     * @param CacheInterface $cache
      */
-    public function __construct(string $basePath, object $cache)
+    public function __construct()
     {        
-        $this->generator = new RouteGenerator(new RouteParser(),$cache);    
-        $this->basePath = $basePath;
+        $this->generator = new RouteGenerator(new RouteParser());    
         $this->routeMiddlewares = [];
         $this->routeOptions = [];        
     }
@@ -89,10 +86,10 @@ class Router implements RouterInterface
      *
      * @param string $method
      * @param string $handlerClass
-     * @param string|object $middleware
+     * @param string $middleware
      * @return void
      */
-    public function addRouteMiddleware(string $method, string $handlerClass, $middleware): void
+    public function addRouteMiddleware(string $method, string $handlerClass, string $middleware): void
     {   
         $this->routeMiddlewares[$method][$handlerClass][] = $middleware;
     } 
