@@ -243,7 +243,8 @@ class Application
     {
         try {    
             $path = $request->getUri()->getPath();
-            $path = '/' . \ltrim($path,BASE_PATH);
+            $base = empty(BASE_PATH) ? '/' : BASE_PATH;
+            $path = '/' . \trim(\preg_replace($base . "/",'',$path,1),"/");
             
             $method = $request->getMethod();
 
