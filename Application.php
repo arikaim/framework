@@ -30,6 +30,7 @@ class Application
      *  Sefault controller class for page not found error
      */
     const DEFAULT_PAGE_NOT_FOUND_HANDLER = '\Arikaim\Core\Controllers\ErrorController:showPageNotFound';
+    
     /**
      *  Default error handler class
      */
@@ -242,7 +243,7 @@ class Application
     {
         try {    
             $path = $request->getUri()->getPath();
-            $path = \str_replace(BASE_PATH,'',$path);
+            $path = '/' . \ltrim($path,BASE_PATH);
             
             $method = $request->getMethod();
 
