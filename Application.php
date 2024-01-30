@@ -244,7 +244,7 @@ class Application
         try {    
             $path = $request->getUri()->getPath();
             $base = empty(BASE_PATH) ? '/' : BASE_PATH;
-            $path = '/' . \trim(\preg_replace($base . "/",'',$path,1),"/");
+            $path = '/' . \ltrim(\preg_replace($base . "/",'',$path,1),"/");
             
             $method = $request->getMethod();
 
