@@ -17,6 +17,7 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 
 use Arikaim\Core\Framework\Router\RouterInterface;
 use Arikaim\Core\Framework\Middleware\BodyParsingMiddleware;
+use Arikaim\Core\Framework\HttpException;
 use Arikaim\Core\Validator\Validator;
 use Arikaim\Core\Access\AuthFactory;
 use Throwable;
@@ -261,7 +262,11 @@ class Application
                 }
                 $middleware = new $handler($this->container,$item['options'] ?? []);
                 // process if is valid middleware instance
-                list($request,$response) = $middleware->process($request,$response);                 
+                list($request,$response) = $middleware->process($request,$response);    
+                if ($response->getStatusCode() > 399) {
+                    // error
+                    throw new HttpException($response->getStatusCode(),1);                    
+                }         
             }
 
             // dispatch routes
@@ -290,7 +295,11 @@ class Application
             $middlewares = $this->router->getRouteMiddlewares($method,$route['handler']);          
             foreach ($middlewares as $middlewareClass) {
                 $middleware = $this->resolveRouteMiddleware($middlewareClass,$routeOptions);
-                list($request,$response) = $middleware->process($request,$response);           
+                list($request,$response) = $middleware->process($request,$response);     
+                if ($response->getStatusCode() > 399) {
+                    // error
+                    throw new HttpException($response->getStatusCode(),1);                    
+                }        
             }
 
             // add route options

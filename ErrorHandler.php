@@ -18,7 +18,6 @@ use Arikaim\Core\App\Install;
 use Arikaim\Core\Routes\RouteType;
 use Arikaim\Core\System\Error\ApplicationError;
 use Arikaim\Core\System\Error\ErrorHandlerInterface;
-use Arikaim\Core\Access\AccessDeniedException;
 use Arikaim\Core\Validator\DataValidatorException;
 use Arikaim\Core\Http\ApiResponse;
 use ErrorException;
@@ -89,12 +88,10 @@ class ErrorHandler
     
         $this->resolveRenderer();
 
-        // access denied
-        if ($exception instanceof AccessDeniedException) {
-            if ($exception->getResponse() != null) {
-                return $exception->getResponse();
-            }                        
-        }
+        // set status code
+        $statusCode = ($exception instanceof HttpException) ? $exception->getStatusCode() : 400;
+        $response = $response->withStatus($statusCode);
+
         // validation exception
         if ($exception instanceof DataValidatorException) {
             $apiResponse = new ApiResponse($response);
@@ -108,7 +105,7 @@ class ErrorHandler
         $output = $this->renderer->renderError($exception,$renderType);
         $response->getBody()->write($output);
 
-        return $response->withStatus(400);      
+        return $response;      
     }
 
     /**
