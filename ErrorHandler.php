@@ -86,6 +86,11 @@ class ErrorHandler
             }                       
         }
     
+        // check for redirect url
+        if (empty($response->getHeaderLine('Location')) == false) {
+            return $response->withStatus(307);
+        };
+
         $this->resolveRenderer();
 
         // set status code

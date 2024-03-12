@@ -198,7 +198,7 @@ class ArikaimRouter extends Router implements RouterInterface
             $this->addRoute($method,$item['pattern'],$handler,[              
                 'route_options'        => (empty($item['options'] ?? null) == true) ? [] : \json_decode($item['options'],true),
                 'auth'                 => $item['auth'],
-                'redirect'             => (empty($item['redirect_url']) == false) ? BASE_PATH . $item['redirect_url'] : null,
+                'redirect'             => (empty($item['redirect_url']) == false) ? DOMAIN . BASE_PATH . $item['redirect_url'] : null,
                 'route_page_name'      => $item['page_name'] ?? '',
                 'route_extension_name' => $item['extension_name'] ?? ''
             ],$item['uuid']);
