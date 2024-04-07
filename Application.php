@@ -290,7 +290,8 @@ class Application
            
             // get route options
             $routeOptions = $this->router->getRouteOptions($method,$route['id']);
-
+            $routeOptions['key'] = $this->container->get('config')['settings']['jwtKey'] ?? null;
+            
             // run route middlewares
             $middlewares = $this->router->getRouteMiddlewares($method,$route['handler']);          
             foreach ($middlewares as $middlewareClass) {
@@ -331,7 +332,7 @@ class Application
       
         if (empty($auth) == false) {
             // auth middleware
-            $options['authProviders'] = AuthFactory::createAuthProviders($auth);              
+            $options['authProviders'] = AuthFactory::createAuthProviders($auth,$options);              
         } 
 
         return new $middlewareClass($this->container,$options);
