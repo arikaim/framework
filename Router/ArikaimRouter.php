@@ -44,19 +44,58 @@ class ArikaimRouter extends Router implements RouterInterface
     protected $cache;
 
     /**
+     * Skip api routes
+     *
+     * @var bool
+     */
+    protected $skipApiRoutes;
+
+    /**
+     * Skip home page route
+     *
+     * @var bool
+     */
+    protected $skipHomePage;
+
+    /**
+     * Skip install page route
+     *
+     * @var bool
+     */
+    protected $skipInstallPage;
+
+    /**
+     * Skip page routes
+     *
+     * @var bool
+     */
+    protected $skipPageRoutes;
+
+    /**
      * Constructor
      *
      * @param ContainerInterface $container
      * @param object|null $routeLoader
      * @param CacheInterface|null $cache
+     * @param array $options
      */
-    public function __construct(ContainerInterface $container, $routeLoader = null, ?object $cache = null)
+    public function __construct(
+        ContainerInterface $container, 
+        $routeLoader = null, 
+        ?object $cache = null,
+        array $options = []
+    )
     {        
         parent::__construct();
 
         $this->cache = $cache ?? $container->get('cache');  
         $this->container = $container;
         $this->routeLoader = $routeLoader ?? $container->get('routes.storage');
+
+        $this->skipApiRoutes = $options['skipApiRoutes'] ?? false;
+        $this->skipHomePage = $options['skipHomePage'] ?? false;
+        $this->skipPageRoutes = $options['skipPageRoutes'] ?? false;
+        $this->skipInstallPage = $options['skipInstallPage'] ?? false;
     }
 
     /**
@@ -126,8 +165,10 @@ class ArikaimRouter extends Router implements RouterInterface
 
         switch($type) {
             case RouteType::HOME_PAGE_URL: 
-                // home page route                 
-                $this->mapRoutes($method,3);
+                // home page route        
+                if ($this->skipHomePage !== true) {
+                    $this->mapRoutes($method,3);
+                }        
                 break;
             case RouteType::ADMIN_PAGE_URL: 
                 // map control panel page
@@ -138,8 +179,10 @@ class ArikaimRouter extends Router implements RouterInterface
                 $this->mapSystemRoutes($method);      
                 break;
             case RouteType::API_URL: 
-                // api routes only 
-                $this->mapRoutes($method,2);    
+                if ($this->skipApiRoutes !== true) {
+                    // api routes only 
+                    $this->mapRoutes($method,2); 
+                }   
                 break;
             case RouteType::ADMIN_API_URL:                
                 // map admin api routes
@@ -147,10 +190,14 @@ class ArikaimRouter extends Router implements RouterInterface
                 $this->mapSystemRoutes($method);  
                 break;
             case RouteType::INSTALL_PAGE: 
-                $this->addRoute('GET','/admin/install','Arikaim\Core\App\InstallPage:loadInstall');
+                if ($this->skipInstallPage !== true) {
+                    $this->addRoute('GET','/admin/install','Arikaim\Core\App\InstallPage:loadInstall');
+                }
                 break;
-            case RouteType::UNKNOW_TYPE:                 
-                $this->mapRoutes($method,$type);
+            case RouteType::UNKNOW_TYPE:   
+                if ($this->skipPageRoutes !== true) {       
+                    $this->mapRoutes($method,$type);
+                }
                 break;            
         }
 
