@@ -233,7 +233,7 @@ class Application
         $response = $this->handleRequest($request,$this->factory->createResponse(200),$options);
         if ($this->headers != null) {
             foreach ($this->headers as $name => $value) {
-                $response->withHeader($name,$value);
+                $response = $response->withHeader($name,$value);
             }
         }
         try {
