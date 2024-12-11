@@ -88,9 +88,10 @@ class ArikaimRouter extends Router implements RouterInterface
     {        
         parent::__construct();
 
-        $this->cache = $cache ?? $container->get('cache');  
-        $this->container = $container;
-        $this->routeLoader = $routeLoader ?? $container->get('routes.storage');
+        $this->container = &$container;
+        $this->cache = $cache ?? $this->container->get('cache');  
+       
+        $this->routeLoader = $routeLoader ?? $this->container->get('routes.storage');
 
         $this->skipApiRoutes = $options['skipApiRoutes'] ?? false;
         $this->skipHomePage = $options['skipHomePage'] ?? false;

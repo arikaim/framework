@@ -9,7 +9,6 @@
  */
 namespace Arikaim\Core\Framework;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -29,13 +28,6 @@ use Throwable;
 class ErrorHandler
 {
     /**
-     * Container
-     *
-     * @var ContainerInterface|null
-     */
-    protected $container = null;
-
-    /**
      * Error renderer
      *
      * @var ErrorHandlerInterface|null
@@ -45,12 +37,10 @@ class ErrorHandler
     /**
      * Constructor
      *
-     * @param ContainerInterface|null $container
      * @param object|null $renderer
      */
-    public function __construct(?ContainerInterface $container = null, ?ErrorHandlerInterface $renderer = null)
-    {        
-        $this->container = $container;    
+    public function __construct(?ErrorHandlerInterface $renderer = null)
+    {         
         $this->renderer = $renderer;            
     }
 
@@ -136,8 +126,10 @@ class ErrorHandler
      */
     private function resolveRenderer(): void
     {
+        global $arikaim;
+
         if ($this->renderer == null) {
-            $this->renderer = new ApplicationError($this->container->get('page'));              
+            $this->renderer = new ApplicationError($arikaim->get('page'));              
         }
     } 
 }

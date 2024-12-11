@@ -19,6 +19,16 @@ interface RouterInterface
     public const METHOD_NOT_ALLOWED = 2;
 
     /**
+     * Dispatch route
+     *
+     * @param string $method
+     * @param string $path
+     * @param string|null $adminPagePath
+     * @return array
+     */
+    public function dispatchRoute(string $method, string $path, ?string $adminPagePath = null): array;
+    
+    /**
      * Add route
      *
      * @param string $method

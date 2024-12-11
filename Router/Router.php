@@ -59,6 +59,19 @@ class Router implements RouterInterface
     }
 
     /**
+     * Dispatch route
+     *
+     * @param string $method
+     * @param string $path
+     * @param string|null $adminPagePath
+     * @return array
+     */
+    public function dispatchRoute(string $method, string $path, ?string $adminPagePath = null): array
+    {
+        return [];
+    }
+
+    /**
      * Get route middlewares
      *
      * @param string $method

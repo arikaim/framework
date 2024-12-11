@@ -11,7 +11,6 @@ namespace Arikaim\Core\Framework\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Container\ContainerInterface;
 
 use Arikaim\Core\Framework\MiddlewareInterface;
 
@@ -28,13 +27,6 @@ abstract class Middleware implements MiddlewareInterface
     protected $options = [];
 
     /**
-     * Container
-     *
-     * @var ContainerInterface|null
-     */
-    protected $container = null;
-
-    /**
      * Process middleware 
      *
      * @param ServerRequestInterface $request
@@ -46,12 +38,10 @@ abstract class Middleware implements MiddlewareInterface
     /**
      * Constructor
      *
-     * @param ContainerInterface|null
      * @param array|null $options
      */
-    public function __construct(?ContainerInterface $container = null, ?array $options = [])
+    public function __construct(?array $options = [])
     {
-        $this->container = $container;
         $this->options = $options ?? [];
     }
     

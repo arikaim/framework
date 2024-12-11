@@ -80,23 +80,32 @@ class Application
     protected $errorHandlerClass;
 
     /**
+     * Response headers
+     * @var array|null
+     */
+    protected $headers;
+
+    /**
      * Constructor
      *
      * @param ContainerInterface $container
      * @param string|null $errorHandlerClass
      * @param object|null $factory
+     * @param array|null $headers
      */
     public function __construct(
         ContainerInterface $container, 
         RouterInterface $router,
         ?string $errorHandlerClass = null, 
-        $factory = null
+        $factory = null,
+        ?array $headers = null
     )
     {        
-        $this->container = $container;
+        $this->container = &$container;
         $this->factory = ($factory == null) ? new Psr17Factory() : $factory;      
         $this->router = $router;
         $this->errorHandlerClass = $errorHandlerClass;
+        $this->headers = $headers;
     }
 
     /**
@@ -222,7 +231,11 @@ class Application
      
         // handle
         $response = $this->handleRequest($request,$this->factory->createResponse(200),$options);
-
+        if ($this->headers != null) {
+            foreach ($this->headers as $name => $value) {
+                $response->withHeader($name,$value);
+            }
+        }
         try {
             // emit        
             Self::emit($response);
@@ -260,7 +273,7 @@ class Application
                 if (empty($handler) == true) {
                     continue;
                 }
-                $middleware = new $handler($this->container,$item['options'] ?? []);
+                $middleware = new $handler($item['options'] ?? []);
                 // process if is valid middleware instance
                 list($request,$response) = $middleware->process($request,$response);    
                 if ($response->getStatusCode() > 399) {
@@ -335,7 +348,7 @@ class Application
             $options['authProviders'] = AuthFactory::createAuthProviders($auth,$options);              
         } 
 
-        return new $middlewareClass($this->container,$options);
+        return new $middlewareClass($options);
     }
 
     /**
@@ -412,7 +425,7 @@ class Application
     {
         if ($this->errorHandler == null) {
             $this->errorHandlerClass = $this->errorHandlerClass ?? Self::DEFUALT_ERROR_HANDLER;
-            $this->errorHandler = new $this->errorHandlerClass($this->container);
+            $this->errorHandler = new $this->errorHandlerClass();
         }
     }
 
