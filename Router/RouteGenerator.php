@@ -33,7 +33,7 @@ class RouteGenerator
     /**
      * Constructor
      *
-     * @param RouteParser $routeParser
+     * @param object $routeParser
      */
     public function __construct(object $routeParser)
     {

@@ -94,14 +94,14 @@ class Application
      * @param array|null $headers
      */
     public function __construct(
-        ContainerInterface $container, 
+        ContainerInterface &$container, 
         RouterInterface $router,
         ?string $errorHandlerClass = null, 
         $factory = null,
         ?array $headers = null
     )
     {        
-        $this->container = &$container;
+        $this->container = $container;
         $this->factory = ($factory == null) ? new Psr17Factory() : $factory;      
         $this->router = $router;
         $this->errorHandlerClass = $errorHandlerClass;

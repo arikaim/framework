@@ -30,20 +30,6 @@ class ArikaimRouter extends Router implements RouterInterface
     protected $container;
 
     /**
-     * Route loader
-     *
-     * @var null|object
-     */
-    protected $routeLoader;
-
-    /**
-     * Cache
-     *
-     * @var null|object
-     */
-    protected $cache;
-
-    /**
      * Skip api routes
      *
      * @var bool
@@ -78,16 +64,13 @@ class ArikaimRouter extends Router implements RouterInterface
      * @param array $options
      */
     public function __construct(
-        ContainerInterface $container,        
+        ContainerInterface &$container,        
         array $options = []
     )
     {        
         parent::__construct();
 
-        $this->container = &$container;
-        $this->cache = $this->container->get('cache');  
-        $this->routeLoader = $this->container->get('routes.storage');
-
+        $this->container = $container;         
         $this->skipApiRoutes = $options['skipApiRoutes'] ?? false;
         $this->skipHomePage = $options['skipHomePage'] ?? false;
         $this->skipPageRoutes = $options['skipPageRoutes'] ?? false;
@@ -110,15 +93,15 @@ class ArikaimRouter extends Router implements RouterInterface
     
         $cacheKey = $method . '.' . (string)$routeType;
 
-        $variableRoutes = $this->cache->fetch('variable.routes.' . $cacheKey);
-        $staticRoutes = $this->cache->fetch('static.routes.' . $cacheKey);
+        $variableRoutes = $this->container->get('cache')->fetch('variable.routes.' . $cacheKey);
+        $staticRoutes = $this->container->get('cache')->fetch('static.routes.' . $cacheKey);
         
-        $routeOptions = $this->cache->fetch('route.options.' . $cacheKey);
+        $routeOptions = $this->container->get('cache')->fetch('route.options.' . $cacheKey);
         if ($routeOptions !== false) {
             $this->routeOptions = $routeOptions;
         }
         
-        $routeMiddlewares = $this->cache->fetch('route.middlewares.' . $cacheKey);
+        $routeMiddlewares = $this->container->get('cache')->fetch('route.middlewares.' . $cacheKey);
         if ($routeMiddlewares !== false) {
             $this->routeMiddlewares[$method] = $routeMiddlewares;
         }
@@ -129,10 +112,10 @@ class ArikaimRouter extends Router implements RouterInterface
             list($staticRoutes,$variableRoutes) = $this->generator->getData($method);
 
             // save routes to cache
-            $this->cache->save('variable.routes.' . $cacheKey,$variableRoutes); 
-            $this->cache->save('static.routes.' . $cacheKey,$staticRoutes); 
-            $this->cache->save('route.options.' . $cacheKey,$this->routeOptions);
-            $this->cache->save('route.middlewares.' . $cacheKey,$this->getMiddlewares($method));
+            $this->container->get('cache')->save('variable.routes.' . $cacheKey,$variableRoutes); 
+            $this->container->get('cache')->save('static.routes.' . $cacheKey,$staticRoutes); 
+            $this->container->get('cache')->save('route.options.' . $cacheKey,$this->routeOptions);
+            $this->container->get('cache')->save('route.middlewares.' . $cacheKey,$this->getMiddlewares($method));
         }        
 
         // add admin twig extension                
@@ -210,10 +193,10 @@ class ArikaimRouter extends Router implements RouterInterface
     public function readRoutes(string $method, ?int $type = null): array
     {
         $cacheItemkey = 'routes.list.' . $method . '.' . ((string)$type ?? 'all');
-        $routes = $this->cache->fetch($cacheItemkey);  
+        $routes = $this->container->get('cache')->fetch($cacheItemkey);  
         if ($routes === false) {
-            $routes = $this->routeLoader->searchRoutes($method,$type);
-            $this->cache->save($cacheItemkey,$routes);   
+            $routes = $this->container->get('routes.storage')->searchRoutes($method,$type);
+            $this->container->get('cache')->save($cacheItemkey,$routes);   
         }
         
         return $routes;
